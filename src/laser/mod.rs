@@ -1,6 +1,7 @@
 //! Calculation and initialization of optical forces and quantities exerted on the atoms
 
 pub mod cooling;
+pub mod dipole_force;
 pub mod doppler;
 pub mod force;
 pub mod gaussian;
