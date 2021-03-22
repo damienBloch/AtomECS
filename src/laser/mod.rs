@@ -6,7 +6,6 @@ pub mod doppler;
 pub mod force;
 pub mod gaussian;
 pub mod intensity;
-pub mod intensity_gradient;
 pub mod photons_scattered;
 pub mod rate;
 pub mod repump;
@@ -79,10 +78,6 @@ impl<'a> System<'a> for AttachLaserComponentsToNewlyCreatedAtomsSystem {
 					contents: [photons_scattered::ActualPhotonsScattered::default();
 						COOLING_BEAM_LIMIT],
 				},
-			);
-			updater.insert(
-				ent, 
-				intensity_gradient::LaserIntensityGradientSampler::default()
 			);
 		}
 	}
