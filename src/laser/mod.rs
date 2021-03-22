@@ -1,6 +1,7 @@
 //! Calculation and initialization of optical forces and quantities exerted on the atoms
 
 pub mod cooling;
+pub mod dipole_beam;
 pub mod dipole_force;
 pub mod doppler;
 pub mod force;
@@ -81,8 +82,8 @@ impl<'a> System<'a> for AttachLaserComponentsToNewlyCreatedAtomsSystem {
 				},
 			);
 			updater.insert(
-				ent, 
-				intensity_gradient::LaserIntensityGradientSampler::default()
+				ent,
+				intensity_gradient::LaserIntensityGradientSampler::default(),
 			);
 		}
 	}

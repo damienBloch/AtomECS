@@ -23,7 +23,7 @@ use std::time::Instant;
 
 fn run_with_parameter(_parameter_name: &str, iterator: usize) {
     let _detuning_values: Vec<f64> = vec![-0.1, -0.3, -0.7, -1.5, -3.0];
-    let power_values: Vec<f64> = vec![0.1, 0.1, 1.0];
+    let power_values: Vec<f64> = vec![0.01];
     let now = Instant::now();
 
     // Create the simulation world and builder for the ECS dispatcher.
@@ -160,7 +160,7 @@ fn run_with_parameter(_parameter_name: &str, iterator: usize) {
     // creating the entity that represents the source
     //
     // contains a central creator
-    let number_to_emit = 100;
+    let number_to_emit = 1000;
     let size_of_cube = 1.0e-4;
     let speed = 0.1; // m/s
 
