@@ -80,10 +80,6 @@ impl<'a> System<'a> for AttachLaserComponentsToNewlyCreatedAtomsSystem {
 						COOLING_BEAM_LIMIT],
 				},
 			);
-			updater.insert(
-				ent,
-				intensity_gradient::LaserIntensityGradientSampler::default(),
-			);
 		}
 	}
 }
