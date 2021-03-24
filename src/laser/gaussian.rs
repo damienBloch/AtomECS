@@ -95,8 +95,8 @@ pub struct GaussianRayleighRange {
 	pub rayleigh_range: f64,
 }
 
-/// Computes the rayleigh range for a given Geam and wavelength
-fn make_gaussian_rayleigh_range(
+/// Computes the rayleigh range for a given beam and wavelength
+pub fn make_gaussian_rayleigh_range(
 	wavelength: &f64,
 	gaussian: &GaussianBeam,
 ) -> GaussianRayleighRange {
@@ -109,6 +109,8 @@ impl Component for GaussianRayleighRange {
 	type Storage = VecStorage<Self>;
 }
 
+/// A component that stores additional information about a given beam
+/// entity, such as internal reference frame and ellipticity
 #[derive(Clone, Copy)]
 pub struct GaussianReferenceFrame {
 	pub x_vector: Vector3<f64>,
@@ -119,6 +121,8 @@ impl Component for GaussianReferenceFrame {
 	type Storage = VecStorage<Self>;
 }
 
+/// Computes the intensity gradient of a given beam with and returns it as
+/// a three-dimensional vector
 pub fn get_gaussian_beam_intensity_gradient(
 	beam: &GaussianBeam,
 	pos: &Position,

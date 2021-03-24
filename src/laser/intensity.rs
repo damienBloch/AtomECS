@@ -146,6 +146,7 @@ pub mod tests {
 
         test_world.register::<CoolingLightIndex>();
         test_world.register::<GaussianBeam>();
+        test_world.register::<GaussianRayleighRange>();
         test_world.register::<CircularMask>();
         test_world.register::<Position>();
         test_world.register::<LaserIntensitySamplers>();

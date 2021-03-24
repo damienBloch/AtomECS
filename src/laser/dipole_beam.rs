@@ -10,7 +10,7 @@ use specs::{
 #[derive(Deserialize, Serialize, Clone, Copy)]
 pub struct DipoleLight {
     ///wavelength of the laser light in SI units of m.
-    wavelength: f64,
+    pub wavelength: f64,
 }
 
 impl DipoleLight {
