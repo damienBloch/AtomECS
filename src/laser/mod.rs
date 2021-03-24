@@ -1,13 +1,10 @@
 //! Calculation and initialization of optical forces and quantities exerted on the atoms
 
 pub mod cooling;
-pub mod dipole_beam;
-pub mod dipole_force;
 pub mod doppler;
 pub mod force;
 pub mod gaussian;
 pub mod intensity;
-pub mod intensity_gradient;
 pub mod photons_scattered;
 pub mod rate;
 pub mod repump;

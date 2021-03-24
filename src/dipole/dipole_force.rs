@@ -2,12 +2,12 @@ extern crate rayon;
 extern crate specs;
 use crate::constant;
 
-use crate::laser::intensity_gradient::LaserIntensityGradientSamplers;
+use crate::dipole::intensity_gradient::LaserIntensityGradientSamplers;
 
 use specs::{Join, ReadStorage, System, WriteStorage};
 extern crate nalgebra;
 use crate::atom::AtomicTransition;
-use crate::laser::dipole_beam::{DipoleLight, DipoleLightIndex};
+use crate::dipole::dipole_beam::{DipoleLight, DipoleLightIndex};
 use nalgebra::Vector3;
 
 use crate::atom::Force;
@@ -86,7 +86,7 @@ pub mod tests {
                 force: Vector3::new(0.0, 0.0, 0.0),
             })
             .with(LaserIntensityGradientSamplers {
-                contents: [crate::laser::intensity_gradient::LaserIntensityGradientSampler {
+                contents: [crate::dipole::intensity_gradient::LaserIntensityGradientSampler {
                     gradient: Vector3::new(0.0, 1.0, -2.0),
                 }; crate::laser::COOLING_BEAM_LIMIT],
             })
