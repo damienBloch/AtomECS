@@ -1,4 +1,4 @@
-//! Loading a Sr single beam dipole trap from center.
+//! Loading a Sr cross beam dipole trap from center.
 
 extern crate atomecs as lib;
 extern crate nalgebra;
@@ -6,17 +6,12 @@ use lib::atom::{AtomicTransition, Position, Velocity};
 use lib::atom_sources::central_creator::CentralCreator;
 use lib::atom_sources::emit::AtomNumberToEmit;
 use lib::atom_sources::mass::{MassDistribution, MassRatio};
-use lib::atom_sources::oven::{OvenAperture, OvenBuilder};
 use lib::destructor::ToBeDestroyed;
 use lib::dipole;
 use lib::ecs;
 use lib::integrator::Timestep;
 use lib::laser;
-use lib::laser::cooling::CoolingLight;
-use lib::laser::force::EmissionForceOption;
 use lib::laser::gaussian::GaussianBeam;
-use lib::laser::photons_scattered::ScatteringFluctuationsOption;
-use lib::magnetic::quadrupole::QuadrupoleField3D;
 use lib::output::file;
 use lib::output::file::Text;
 use lib::shapes::Cuboid;
@@ -139,7 +134,7 @@ fn main() {
         .build();
 
     // Run the simulation for a number of steps.
-    for _i in 0..100_000 {
+    for _i in 0..1_000_000 {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
     }
