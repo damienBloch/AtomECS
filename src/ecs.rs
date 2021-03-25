@@ -25,6 +25,7 @@ pub fn register_components(world: &mut World) {
 	atom::register_components(world);
 	magnetic::register_components(world);
 	laser::register_components(world);
+	dipole::register_components(world);
 	atom_sources::register_components(world);
 	sim_region::register_components(world);
 	world.register::<Dark>();

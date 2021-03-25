@@ -4,7 +4,7 @@ pub mod intensity_gradient;
 
 extern crate specs;
 use crate::initiate::NewlyCreated;
-use specs::{DispatcherBuilder, Entities, Join, LazyUpdate, Read, ReadStorage, System};
+use specs::{DispatcherBuilder, Entities, Join, LazyUpdate, Read, ReadStorage, System, World};
 
 pub const DIPOLE_BEAM_LIMIT: usize = 16;
 
@@ -67,4 +67,8 @@ pub fn add_systems_to_dispatch(builder: &mut DispatcherBuilder<'static, 'static>
         "apply_dipole_force",
         &["sample_intensity_gradient"],
     );
+}
+pub fn register_components(world: &mut World) {
+    world.register::<dipole_beam::DipoleLight>();
+    world.register::<dipole_beam::DipoleLightIndex>();
 }
