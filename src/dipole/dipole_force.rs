@@ -88,7 +88,7 @@ pub mod tests {
             .with(LaserIntensityGradientSamplers {
                 contents: [crate::dipole::intensity_gradient::LaserIntensityGradientSampler {
                     gradient: Vector3::new(0.0, 1.0, -2.0),
-                }; crate::laser::COOLING_BEAM_LIMIT],
+                }; crate::dipole::DIPOLE_BEAM_LIMIT],
             })
             .with(transition)
             .build();

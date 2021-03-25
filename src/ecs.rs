@@ -9,6 +9,7 @@ use crate::atom_sources;
 use crate::destructor::DeleteToBeDestroyedEntitiesSystem;
 //use crate::detector;
 //use crate::detector::DetectingInfo;
+use crate::dipole;
 use crate::gravity::ApplyGravitationalForceSystem;
 use crate::initiate::DeflagNewAtomsSystem;
 use crate::integrator::{AddOldForceToNewAtomsSystem, Step, VelocityVerletIntegrationSystem};
@@ -48,6 +49,7 @@ impl AtomecsDispatcherBuilder {
 	pub fn add_systems(&mut self) {
 		magnetic::add_systems_to_dispatch(&mut self.builder, &[]);
 		laser::add_systems_to_dispatch(&mut self.builder, &[]);
+		dipole::add_systems_to_dispatch(&mut self.builder, &[]);
 		atom_sources::add_systems_to_dispatch(&mut self.builder, &[]);
 		self.builder
 			.add(ApplyGravitationalForceSystem, "add_gravity", &["clear"]);
