@@ -4,7 +4,7 @@ pub mod intensity_gradient;
 
 extern crate specs;
 use crate::initiate::NewlyCreated;
-use specs::{DispatcherBuilder, Entities, Join, LazyUpdate, Read, ReadStorage, System, World};
+use specs::{DispatcherBuilder, Entities, Join, LazyUpdate, Read, ReadStorage, System};
 
 pub const DIPOLE_BEAM_LIMIT: usize = 16;
 
@@ -48,13 +48,23 @@ pub fn add_systems_to_dispatch(builder: &mut DispatcherBuilder<'static, 'static>
         deps,
     );
     builder.add(
+        dipole_beam::AttachIndexToDipoleLightSystem,
+        "attach_dipole_index",
+        deps,
+    );
+    builder.add(
+        dipole_beam::IndexDipoleLightsSystem,
+        "index_dipole_lights",
+        &["attach_dipole_index"],
+    );
+    builder.add(
         intensity_gradient::SampleLaserIntensityGradientSystem,
         "sample_intensity_gradient",
-        &[],
+        &["index_dipole_lights"],
     );
     builder.add(
         dipole_force::ApplyDipoleForceSystem,
-        "attach_atom_laser_components",
-        deps,
+        "apply_dipole_force",
+        &["sample_intensity_gradient"],
     );
 }
