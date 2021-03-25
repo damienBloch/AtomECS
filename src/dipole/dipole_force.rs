@@ -29,7 +29,6 @@ impl<'a> System<'a> for ApplyDipoleForceSystem {
     ) {
         use rayon::prelude::*;
         use specs::ParJoin;
-
         (&mut force, &atomic_transition, &gradient_sampler)
             .par_join()
             .for_each(|(mut force, atominfo, sampler)| {

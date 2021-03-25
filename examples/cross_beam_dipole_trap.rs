@@ -3,20 +3,21 @@
 extern crate atomecs as lib;
 extern crate nalgebra;
 use lib::atom::{AtomicTransition, Position, Velocity};
+use lib::atom_sources::central_creator::CentralCreator;
 use lib::atom_sources::emit::AtomNumberToEmit;
 use lib::atom_sources::mass::{MassDistribution, MassRatio};
 use lib::atom_sources::oven::{OvenAperture, OvenBuilder};
 use lib::destructor::ToBeDestroyed;
+use lib::dipole;
 use lib::ecs;
 use lib::integrator::Timestep;
+use lib::laser;
 use lib::laser::cooling::CoolingLight;
 use lib::laser::force::EmissionForceOption;
 use lib::laser::gaussian::GaussianBeam;
 use lib::laser::photons_scattered::ScatteringFluctuationsOption;
 use lib::magnetic::quadrupole::QuadrupoleField3D;
 use lib::output::file;
-use lib::laser;
-use lib::dipole;
 use lib::output::file::Text;
 use lib::shapes::Cuboid;
 use lib::sim_region::{SimulationVolume, VolumeType};
@@ -49,9 +50,8 @@ fn main() {
     dispatcher.setup(&mut world.res);
 
     // Create dipole laser.
-    let power = 20.0; 
-    let e_radius = 100.0e-6 / (2.0 * 2.0_f64.sqrt()); 
-
+    let power = 20.0;
+    let e_radius = 200.0e-6 / (2.0 * 2.0_f64.sqrt());
 
     let gaussian_beam = GaussianBeam {
         intersection: Vector3::new(0.0, 0.0, 0.0),
@@ -62,18 +62,42 @@ fn main() {
     world
         .create_entity()
         .with(gaussian_beam)
-        .with(dipole::dipole_beam::DipoleLight{
-            wavelength: 1064.0e-9;
+        .with(dipole::dipole_beam::DipoleLight {
+            wavelength: 1064.0e-9,
         })
-        .with(laser::gaussian::GaussianReferenceFrame{
+        .with(laser::gaussian::GaussianReferenceFrame {
             x_vector: Vector3::y(),
             y_vector: Vector3::z(),
             ellipticity: 0.0,
         })
-        .with(laser::gaussian::make_gaussian_rayleigh_range(&1064.0e-9, &gaussian_beam))
+        .with(laser::gaussian::make_gaussian_rayleigh_range(
+            &1064.0e-9,
+            &gaussian_beam,
+        ))
         .build();
-    
 
+    let gaussian_beam = GaussianBeam {
+        intersection: Vector3::new(0.0, 0.0, 0.0),
+        e_radius: e_radius,
+        power: power,
+        direction: Vector3::y(),
+    };
+    world
+        .create_entity()
+        .with(gaussian_beam)
+        .with(dipole::dipole_beam::DipoleLight {
+            wavelength: 1064.0e-9,
+        })
+        .with(laser::gaussian::GaussianReferenceFrame {
+            x_vector: Vector3::x(),
+            y_vector: Vector3::z(),
+            ellipticity: 0.0,
+        })
+        .with(laser::gaussian::make_gaussian_rayleigh_range(
+            &1064.0e-9,
+            &gaussian_beam,
+        ))
+        .build();
     // creating the entity that represents the source
     //
     // contains a central creator
