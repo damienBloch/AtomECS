@@ -155,17 +155,76 @@ pub mod tests {
         assert_approx_eq!(
             actual_intensity_gradient[0],
             sim_result_gradient[0],
-            1e+8_f64
+            1e+5_f64
         );
         assert_approx_eq!(
             actual_intensity_gradient[1],
             sim_result_gradient[1],
-            1e+9_f64
+            1e+5_f64
         );
         assert_approx_eq!(
             actual_intensity_gradient[2],
             sim_result_gradient[2],
-            1e+6_f64
+            1e+5_f64
         );
+    }
+    #[test]
+    fn test_sample_laser_intensity_gradient_again_system() {
+        let mut test_world = World::new();
+
+        test_world.register::<DipoleLightIndex>();
+        test_world.register::<GaussianBeam>();
+        test_world.register::<Position>();
+        test_world.register::<LaserIntensityGradientSamplers>();
+        test_world.register::<GaussianRayleighRange>();
+        test_world.register::<GaussianReferenceFrame>();
+
+        let beam = GaussianBeam {
+            direction: Vector3::x(),
+            intersection: Vector3::new(0.0, 0.0, 0.0),
+            e_radius: 70.71067812e-6,
+            power: 100.0,
+        };
+
+        test_world
+            .create_entity()
+            .with(DipoleLightIndex {
+                index: 0,
+                initiated: true,
+            })
+            .with(beam)
+            .with(crate::laser::gaussian::make_gaussian_rayleigh_range(
+                &1064.0e-9, &beam,
+            ))
+            .with(GaussianReferenceFrame {
+                x_vector: Vector3::y(),
+                y_vector: Vector3::z(),
+                ellipticity: 0.0,
+            })
+            .build();
+
+        let atom1 = test_world
+            .create_entity()
+            .with(Position {
+                pos: Vector3::new(20.0e-6, 20.0e-6, 20.0e-6),
+            })
+            .with(LaserIntensityGradientSamplers {
+                contents: [LaserIntensityGradientSampler::default();
+                    crate::dipole::DIPOLE_BEAM_LIMIT],
+            })
+            .build();
+        let mut system = SampleLaserIntensityGradientSystem;
+        system.run_now(&test_world.res);
+        test_world.maintain();
+        let sampler_storage = test_world.read_storage::<LaserIntensityGradientSamplers>();
+        let sim_result_gradient = sampler_storage
+            .get(atom1)
+            .expect("Entity not found!")
+            .contents[0]
+            .gradient;
+
+        assert_approx_eq!(-8.4628e+7, sim_result_gradient[0], 1e+5_f64);
+        assert_approx_eq!(-4.33992902e+13, sim_result_gradient[1], 1e+8_f64);
+        assert_approx_eq!(-4.33992902e+13, sim_result_gradient[2], 1e+8_f64);
     }
 }

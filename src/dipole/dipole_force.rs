@@ -27,13 +27,13 @@ impl<'a> System<'a> for ApplyDipoleForceSystem {
         &mut self,
         (dipole_light, dipole_index,atomic_transition, gradient_sampler, mut force): Self::SystemData,
     ) {
-        use rayon::prelude::*;
+        use rayon::prelude::ParallelIterator;
         use specs::ParJoin;
         (&mut force, &atomic_transition, &gradient_sampler)
             .par_join()
             .for_each(|(mut force, atominfo, sampler)| {
                 let prefactor = -3. * constant::PI * constant::C.powf(2.0)
-                    / (2. * constant::PI * atominfo.frequency).powf(3.0)
+                    / (2. * (2. * constant::PI * atominfo.frequency).powf(3.0))
                     * atominfo.linewidth;
                 let mut temp_force_coeff = Vector3::new(0.0, 0.0, 0.0);
                 for (index, dipole) in (&dipole_index, &dipole_light).join() {
@@ -58,7 +58,7 @@ pub mod tests {
     use nalgebra::Vector3;
 
     #[test]
-    fn test_sample_laser_intensity_gradient_system() {
+    fn test_apply_dipole_force_system() {
         let mut test_world = World::new();
 
         test_world.register::<DipoleLightIndex>();
@@ -106,5 +106,50 @@ pub mod tests {
         assert_approx_eq!(actual_force[0], sim_result_force[0], 1e+8_f64);
         assert_approx_eq!(actual_force[1], sim_result_force[1], 1e+8_f64);
         assert_approx_eq!(actual_force[2], sim_result_force[2], 1e+8_f64);
+    }
+
+    #[test]
+    fn test_apply_dipole_force_again_system() {
+        let mut test_world = World::new();
+
+        test_world.register::<DipoleLightIndex>();
+        test_world.register::<DipoleLight>();
+        test_world.register::<Force>();
+        test_world.register::<LaserIntensityGradientSamplers>();
+        test_world.register::<AtomicTransition>();
+
+        test_world
+            .create_entity()
+            .with(DipoleLightIndex {
+                index: 0,
+                initiated: true,
+            })
+            .with(DipoleLight {
+                wavelength: 1064.0e-9,
+            })
+            .build();
+
+        let transition = AtomicTransition::strontium();
+        let atom1 = test_world
+            .create_entity()
+            .with(Force {
+                force: Vector3::new(0.0, 0.0, 0.0),
+            })
+            .with(LaserIntensityGradientSamplers {
+                contents: [crate::dipole::intensity_gradient::LaserIntensityGradientSampler {
+                    gradient: Vector3::new(-8.4628e+7, -4.33992902e+13, -4.33992902e+13),
+                }; crate::dipole::DIPOLE_BEAM_LIMIT],
+            })
+            .with(transition)
+            .build();
+        let mut system = ApplyDipoleForceSystem;
+        system.run_now(&test_world.res);
+        test_world.maintain();
+        let sampler_storage = test_world.read_storage::<Force>();
+        let sim_result_force = sampler_storage.get(atom1).expect("Entity not found!").force;
+
+        assert_approx_eq!(-6.06743188e-29, sim_result_force[0], 3e-30_f64);
+        assert_approx_eq!(-3.11151847e-23, sim_result_force[1], 2e-24_f64);
+        assert_approx_eq!(-3.11151847e-23, sim_result_force[2], 2e-24_f64);
     }
 }

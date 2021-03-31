@@ -12,8 +12,8 @@ use lib::ecs;
 use lib::integrator::Timestep;
 use lib::laser;
 use lib::laser::gaussian::GaussianBeam;
-use lib::output::file;
 use lib::output::file::Text;
+use lib::output::{file, xyz_file};
 use lib::shapes::Cuboid;
 use lib::sim_region::{SimulationVolume, VolumeType};
 use nalgebra::Vector3;
@@ -40,13 +40,25 @@ fn main() {
         "",
         &[],
     );
+    builder = builder.with(xyz_file::WriteToXYZFileSystem, "", &[]);
 
     let mut dispatcher = builder.build();
     dispatcher.setup(&mut world.res);
 
+    world
+        .create_entity()
+        .with(xyz_file::XYZWriteHelper {
+            overwrite: true,
+            initialized: false,
+            scale_factor: 20000.,
+            discard_place: Vector3::new(2., 2., 2.),
+            name: format!("{}", "cross_beam_basic"),
+        })
+        .build();
+
     // Create dipole laser.
-    let power = 20.0;
-    let e_radius = 200.0e-6 / (2.0 * 2.0_f64.sqrt());
+    let power = 3.0;
+    let e_radius = 32.0e-6 / (2.0_f64.sqrt());
 
     let gaussian_beam = GaussianBeam {
         intersection: Vector3::new(0.0, 0.0, 0.0),
@@ -58,7 +70,7 @@ fn main() {
         .create_entity()
         .with(gaussian_beam)
         .with(dipole::dipole_beam::DipoleLight {
-            wavelength: 1064.0e-9,
+            wavelength: 1030.0e-9,
         })
         .with(laser::gaussian::GaussianReferenceFrame {
             x_vector: Vector3::y(),
@@ -66,11 +78,12 @@ fn main() {
             ellipticity: 0.0,
         })
         .with(laser::gaussian::make_gaussian_rayleigh_range(
-            &1064.0e-9,
+            &1030.0e-9,
             &gaussian_beam,
         ))
         .build();
 
+    /**
     let gaussian_beam = GaussianBeam {
         intersection: Vector3::new(0.0, 0.0, 0.0),
         e_radius: e_radius,
@@ -93,12 +106,13 @@ fn main() {
             &gaussian_beam,
         ))
         .build();
+        **/
     // creating the entity that represents the source
     //
     // contains a central creator
-    let number_to_emit = 1_000;
+    let number_to_emit = 100;
     let size_of_cube = 1.0e-5;
-    let speed = 0.1; // m/s
+    let speed = 0.05; // m/s
 
     world
         .create_entity()
@@ -126,7 +140,7 @@ fn main() {
             pos: Vector3::new(0.0, 0.0, 0.0),
         })
         .with(Cuboid {
-            half_width: Vector3::new(0.001, 0.0001, 0.0001), //(0.1, 0.01, 0.01)
+            half_width: Vector3::new(0.0001, 0.0001, 0.0001), //(0.1, 0.01, 0.01)
         })
         .with(SimulationVolume {
             volume_type: VolumeType::Inclusive,
@@ -134,7 +148,7 @@ fn main() {
         .build();
 
     // Run the simulation for a number of steps.
-    for _i in 0..1_000_000 {
+    for _i in 0..10_000 {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
     }
