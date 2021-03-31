@@ -13,8 +13,8 @@ use lib::integrator::Timestep;
 use lib::laser::cooling::CoolingLight;
 use lib::laser::gaussian::GaussianBeam;
 use lib::magnetic::quadrupole::QuadrupoleField3D;
-use lib::output::file;
 use lib::output::file::Text;
+use lib::output::{file, xyz_file};
 use lib::shapes::Cuboid;
 use lib::sim_region::{SimulationVolume, VolumeType};
 use nalgebra::Vector3;
@@ -41,9 +41,16 @@ fn main() {
         "",
         &[],
     );
+    builder = builder.with(xyz_file::WriteToXYZFileSystem, "", &[]);
 
     let mut dispatcher = builder.build();
     dispatcher.setup(&mut world.res);
+
+    // Create XYZ_Writer
+    world
+        .create_entity()
+        .with(xyz_file::XYZWriteHelper::default())
+        .build();
 
     // Create magnetic field.
     world

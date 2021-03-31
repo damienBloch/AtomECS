@@ -7,8 +7,21 @@ use std::fs::OpenOptions;
 use std::io::prelude::*;
 
 pub struct XYZWriteHelper {
+    pub overwrite: bool,
     pub initialized: bool,
+    pub scale_factor: f64,
     pub name: String,
+}
+
+impl Default for XYZWriteHelper {
+    fn default() -> Self {
+        XYZWriteHelper {
+            overwrite: true,
+            initialized: false,
+            scale_factor: 20000.,
+            name: format!("{}", "pos_xyz"),
+        }
+    }
 }
 
 impl Component for XYZWriteHelper {
@@ -28,6 +41,15 @@ impl<'a> System<'a> for WriteToXYZFileSystem {
     fn run(&mut self, (step_number, atom, velocity, position, mut xyz_helper): Self::SystemData) {
         if step_number.n % 100 == 0 {
             for helper in (&mut xyz_helper).join() {
+                if helper.initialized != true {
+                    if helper.overwrite == true {
+                        use std::fs;
+                        if let Err(e) = fs::remove_file(format!("{}.xyz", helper.name).as_str()) {
+                            eprintln!("Couldn't delete old file: {}", e);
+                        }
+                    }
+                    helper.initialized = true;
+                }
                 let mut file = OpenOptions::new()
                     .write(true)
                     .append(true)
@@ -41,9 +63,9 @@ impl<'a> System<'a> for WriteToXYZFileSystem {
                     data_string.push_str(
                         format!(
                             "H\t{}\t{}\t{}\n",
-                            &pos.pos[0].to_string(),
-                            &pos.pos[1].to_string(),
-                            &pos.pos[2].to_string()
+                            &(helper.scale_factor * pos.pos[0]).to_string(),
+                            &(helper.scale_factor * pos.pos[1]).to_string(),
+                            &(helper.scale_factor * pos.pos[2]).to_string()
                         )
                         .as_str(),
                     );
@@ -72,7 +94,7 @@ pub mod tests {
     use nalgebra::Vector3;
 
     #[test]
-    fn test_write_toxyz_file_system() {
+    fn test_write_to_xyz_file_system() {
         let mut test_world = World::new();
 
         test_world.register::<Position>();
@@ -99,11 +121,13 @@ pub mod tests {
             })
             .build();
 
-        let _xyz_helper = test_world
+        let xyz_helper = test_world
             .create_entity()
             .with(XYZWriteHelper {
+                overwrite: true,
                 initialized: false,
-                name: format!("{}", "xyz_test"),
+                scale_factor: 20000.,
+                name: format!("{}", "test_xyz"),
             })
             .build();
 
@@ -115,7 +139,21 @@ pub mod tests {
             test_world.maintain();
         }
         let sampler_storage = test_world.read_storage::<Position>();
+        let writer_storage = test_world.read_storage::<XYZWriteHelper>();
 
+        use std::fs;
+        if let Err(e) = fs::remove_file(
+            format!(
+                "{}.xyz",
+                writer_storage
+                    .get(xyz_helper)
+                    .expect("entity not found")
+                    .name
+            )
+            .as_str(),
+        ) {
+            eprintln!("Couldn't delete old file: {}", e);
+        }
         assert_approx_eq!(
             sampler_storage.get(atom1).expect("entity not found").pos[0],
             1.0 + 1.0e-4,
