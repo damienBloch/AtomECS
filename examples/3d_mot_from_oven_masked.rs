@@ -1,4 +1,6 @@
-//! A 2D+ mot configuration, loaded directly from oven.
+//! Loading a Sr 3D MOT directly from an oven source.
+//!
+//! One of the beams has a circular mask, which allows atoms to escape on one side.
 
 extern crate atomecs as lib;
 extern crate nalgebra;
@@ -11,7 +13,7 @@ use lib::destructor::ToBeDestroyed;
 use lib::ecs;
 use lib::integrator::Timestep;
 use lib::laser::cooling::CoolingLight;
-use lib::laser::gaussian::GaussianBeam;
+use lib::laser::gaussian::{CircularMask, GaussianBeam};
 use lib::magnetic::quadrupole::QuadrupoleField3D;
 use lib::output::file;
 use lib::output::file::Text;
@@ -52,30 +54,43 @@ fn main() {
         .with(Position::new())
         .build();
 
-    // Push beam along z
-    let push_beam_radius = 1e-3;
-    let push_beam_power = 0.010;
-    let push_beam_detuning = 0.0;
+    // Create cooling lasers.
+    let detuning = -90.0;
+    let power = 0.23;
+    let radius = 33.0e-3 / (2.0 * 2.0_f64.sqrt()); // 33mm 1/e^2 diameter
 
+    // Horizontal beams along z
     world
         .create_entity()
         .with(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
-            e_radius: push_beam_radius,
-            power: push_beam_power,
+            e_radius: radius,
+            power: power / 5.0,
             direction: Vector3::z(),
         })
         .with(CoolingLight::for_species(
             AtomicTransition::strontium(),
-            push_beam_detuning,
+            detuning,
+            -1,
+        ))
+        .build();
+    world
+        .create_entity()
+        .with(GaussianBeam {
+            intersection: Vector3::new(0.0, 0.0, 0.0),
+            e_radius: radius,
+            power: power / 5.0,
+            direction: -Vector3::z(),
+        })
+        .with(CircularMask { radius: 3.0e-3 })
+        .with(CoolingLight::for_species(
+            AtomicTransition::strontium(),
+            detuning,
             -1,
         ))
         .build();
 
-    // Create cooling lasers.
-    let detuning = -45.0;
-    let power = 0.23;
-    let radius = 33.0e-3 / (2.0 * 2.0_f64.sqrt()); // 33mm 1/e^2 diameter
+    // Angled vertical beams
     world
         .create_entity()
         .with(GaussianBeam {
@@ -192,7 +207,7 @@ fn main() {
         .build();
 
     // Also use a velocity cap so that fast atoms are not even simulated.
-    world.add_resource(VelocityCap { value: 200.0 });
+    world.add_resource(VelocityCap { value: 150.0 });
 
     // Run the simulation for a number of steps.
     for _i in 0..10000 {

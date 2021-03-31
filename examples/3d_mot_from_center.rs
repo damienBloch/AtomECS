@@ -1,17 +1,18 @@
-//! A 2D+ mot configuration, loaded directly from oven.
+//! Loading a Sr 3D MOT directly from the center
 
 extern crate atomecs as lib;
 extern crate nalgebra;
 use lib::atom::{AtomicTransition, Position, Velocity};
+use lib::atom_sources::central_creator::CentralCreator;
 use lib::atom_sources::emit::AtomNumberToEmit;
 use lib::atom_sources::mass::{MassDistribution, MassRatio};
-use lib::atom_sources::oven::{OvenAperture, OvenBuilder};
-use lib::atom_sources::VelocityCap;
 use lib::destructor::ToBeDestroyed;
 use lib::ecs;
 use lib::integrator::Timestep;
 use lib::laser::cooling::CoolingLight;
+use lib::laser::force::EmissionForceOption;
 use lib::laser::gaussian::GaussianBeam;
+use lib::laser::photons_scattered::ScatteringFluctuationsOption;
 use lib::magnetic::quadrupole::QuadrupoleField3D;
 use lib::output::file;
 use lib::output::file::Text;
@@ -52,30 +53,42 @@ fn main() {
         .with(Position::new())
         .build();
 
-    // Push beam along z
-    let push_beam_radius = 1e-3;
-    let push_beam_power = 0.010;
-    let push_beam_detuning = 0.0;
+    // Create cooling lasers.
+    let detuning = -90.0;
+    let power = 0.23; //original: 0.23
+    let radius = 33.0e-3 / (2.0 * 2.0_f64.sqrt()); // 33mm 1/e^2 diameter
 
+    // Horizontal beams along z
     world
         .create_entity()
         .with(GaussianBeam {
             intersection: Vector3::new(0.0, 0.0, 0.0),
-            e_radius: push_beam_radius,
-            power: push_beam_power,
+            e_radius: radius,
+            power: power / 5.0,
             direction: Vector3::z(),
         })
         .with(CoolingLight::for_species(
             AtomicTransition::strontium(),
-            push_beam_detuning,
+            detuning,
+            -1,
+        ))
+        .build();
+    world
+        .create_entity()
+        .with(GaussianBeam {
+            intersection: Vector3::new(0.0, 0.0, 0.0),
+            e_radius: radius,
+            power: power / 5.0,
+            direction: -Vector3::z(),
+        })
+        .with(CoolingLight::for_species(
+            AtomicTransition::strontium(),
+            detuning,
             -1,
         ))
         .build();
 
-    // Create cooling lasers.
-    let detuning = -45.0;
-    let power = 0.23;
-    let radius = 33.0e-3 / (2.0 * 2.0_f64.sqrt()); // 33mm 1/e^2 diameter
+    // Angled vertical beams
     world
         .create_entity()
         .with(GaussianBeam {
@@ -133,21 +146,18 @@ fn main() {
         ))
         .build();
 
-    // Create an oven.
-    // The oven will eject atoms on the first frame and then be deleted.
-    let number_to_emit = 400000;
+    // creating the entity that represents the source
+    //
+    // contains a central creator
+    let number_to_emit = 1_000;
+    let size_of_cube = 1.0e-3;
+    let speed = 1.0; // m/s
+
     world
         .create_entity()
-        .with(
-            OvenBuilder::new(776.0, Vector3::x())
-                .with_aperture(OvenAperture::Circular {
-                    radius: 0.005,
-                    thickness: 0.001,
-                })
-                .build(),
-        )
+        .with(CentralCreator::new_uniform_cubic(size_of_cube, speed))
         .with(Position {
-            pos: Vector3::new(-0.083, 0.0, 0.0),
+            pos: Vector3::new(0.0, 0.0, 0.0),
         })
         .with(MassDistribution::new(vec![MassRatio {
             mass: 88.0,
@@ -162,37 +172,24 @@ fn main() {
 
     // Define timestep
     world.add_resource(Timestep { delta: 1.0e-6 });
+    // enable the usage of the emission system
+    world.add_resource(EmissionForceOption::default());
+    // enable that the number of actually scattered photons is drawn from a poisson distribution
+    world.add_resource(ScatteringFluctuationsOption::default());
 
-    // Use a simulation bound so that atoms that escape the capture region are deleted from the simulation.
+    // Use a simulation bound so that atoms that escape the capture region are deleted from the simulation
     world
         .create_entity()
         .with(Position {
             pos: Vector3::new(0.0, 0.0, 0.0),
         })
         .with(Cuboid {
-            half_width: Vector3::new(0.1, 0.01, 0.01),
+            half_width: Vector3::new(0.2, 0.03, 0.03), //(0.1, 0.01, 0.01)
         })
         .with(SimulationVolume {
             volume_type: VolumeType::Inclusive,
         })
         .build();
-
-    // The simulation bound also now includes a small pipe to capture the 2D MOT output properly.
-    world
-        .create_entity()
-        .with(Position {
-            pos: Vector3::new(0.0, 0.0, 0.1),
-        })
-        .with(Cuboid {
-            half_width: Vector3::new(0.01, 0.01, 0.1),
-        })
-        .with(SimulationVolume {
-            volume_type: VolumeType::Inclusive,
-        })
-        .build();
-
-    // Also use a velocity cap so that fast atoms are not even simulated.
-    world.add_resource(VelocityCap { value: 200.0 });
 
     // Run the simulation for a number of steps.
     for _i in 0..10000 {

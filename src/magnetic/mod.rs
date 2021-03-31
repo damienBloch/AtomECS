@@ -3,7 +3,6 @@
 extern crate nalgebra;
 extern crate specs;
 use crate::initiate::NewlyCreated;
-use crate::integrator::INTEGRATE_POSITION_SYSTEM_NAME;
 use nalgebra::Vector3;
 use specs::{
 	Component, DispatcherBuilder, Entities, Join, LazyUpdate, Read, ReadStorage, System,
@@ -121,10 +120,7 @@ pub fn add_systems_to_dispatch(builder: &mut DispatcherBuilder<'static, 'static>
 	builder.add(
 		quadrupole::Sample3DQuadrupoleFieldSystem,
 		"magnetics_quadrupole",
-		&[
-			"magnetics_clear",
-			crate::integrator::INTEGRATE_POSITION_SYSTEM_NAME,
-		],
+		&["magnetics_clear"],
 	);
 	builder.add(
 		uniform::UniformMagneticFieldSystem,
@@ -134,7 +130,7 @@ pub fn add_systems_to_dispatch(builder: &mut DispatcherBuilder<'static, 'static>
 	builder.add(
 		grid::SampleMagneticGridSystem,
 		"magnetics_grid",
-		&["magnetics_uniform", INTEGRATE_POSITION_SYSTEM_NAME],
+		&["magnetics_uniform"],
 	);
 	builder.add(
 		CalculateMagneticFieldMagnitudeSystem,
@@ -149,12 +145,12 @@ pub fn add_systems_to_dispatch(builder: &mut DispatcherBuilder<'static, 'static>
 	builder.add(
 		zeeman::AttachZeemanShiftSamplersToNewlyCreatedAtomsSystem,
 		"attach_zeeman_shift_samplers",
-		&[],
+		&["add_magnetic_field_samplers"],
 	);
 	builder.add(
 		zeeman::CalculateZeemanShiftSystem,
 		"zeeman_shift",
-		&["magnetics_magnitude"],
+		&["attach_zeeman_shift_samplers"],
 	);
 }
 
@@ -180,19 +176,11 @@ pub mod tests {
 	fn test_magnetics_systems() {
 		let mut test_world = World::new();
 		register_components(&mut test_world);
-		test_world.register::<NewlyCreated>();
-		test_world.register::<zeeman::ZeemanShiftSampler>();
+		test_world.register::<Position>();
 		let mut builder = DispatcherBuilder::new();
-		builder.add(
-			crate::integrator::VelocityVerletIntegratePositionSystem {},
-			crate::integrator::INTEGRATE_POSITION_SYSTEM_NAME,
-			&[],
-		);
 		add_systems_to_dispatch(&mut builder, &[]);
 		let mut dispatcher = builder.build();
 		dispatcher.setup(&mut test_world.res);
-		test_world.add_resource(crate::integrator::Step { n: 0 });
-		test_world.add_resource(crate::integrator::Timestep { delta: 1.0e-6 });
 
 		test_world
 			.create_entity()
@@ -232,18 +220,10 @@ pub mod tests {
 		let mut test_world = World::new();
 		register_components(&mut test_world);
 		test_world.register::<NewlyCreated>();
-		test_world.register::<zeeman::ZeemanShiftSampler>();
 		let mut builder = DispatcherBuilder::new();
-		builder.add(
-			crate::integrator::VelocityVerletIntegratePositionSystem {},
-			crate::integrator::INTEGRATE_POSITION_SYSTEM_NAME,
-			&[],
-		);
 		add_systems_to_dispatch(&mut builder, &[]);
 		let mut dispatcher = builder.build();
 		dispatcher.setup(&mut test_world.res);
-		test_world.add_resource(crate::integrator::Step { n: 0 });
-		test_world.add_resource(crate::integrator::Timestep { delta: 1.0e-6 });
 
 		let sampler_entity = test_world.create_entity().with(NewlyCreated).build();
 

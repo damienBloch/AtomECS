@@ -13,7 +13,6 @@ pub mod twolevel;
 
 extern crate specs;
 use crate::initiate::NewlyCreated;
-use crate::integrator::INTEGRATE_POSITION_SYSTEM_NAME;
 use specs::{DispatcherBuilder, Entities, Join, LazyUpdate, Read, ReadStorage, System, World};
 
 pub const COOLING_BEAM_LIMIT: usize = 16;
@@ -119,7 +118,7 @@ pub fn add_systems_to_dispatch(builder: &mut DispatcherBuilder<'static, 'static>
 	builder.add(
 		intensity::SampleLaserIntensitySystem,
 		"sample_laser_intensity",
-		&["index_cooling_lights", INTEGRATE_POSITION_SYSTEM_NAME],
+		&["index_cooling_lights"],
 	);
 	builder.add(
 		doppler::CalculateDopplerShiftSystem,
@@ -163,7 +162,7 @@ pub fn add_systems_to_dispatch(builder: &mut DispatcherBuilder<'static, 'static>
 	builder.add(
 		force::CalculateAbsorptionForcesSystem,
 		"calculate_absorption_forces",
-		&["calculate_actual_photons", INTEGRATE_POSITION_SYSTEM_NAME],
+		&["calculate_actual_photons"],
 	);
 	builder.add(
 		repump::RepumpSystem,
@@ -173,10 +172,7 @@ pub fn add_systems_to_dispatch(builder: &mut DispatcherBuilder<'static, 'static>
 	builder.add(
 		force::ApplyEmissionForceSystem,
 		"calculate_emission_forces",
-		&[
-			"calculate_absorption_forces",
-			INTEGRATE_POSITION_SYSTEM_NAME,
-		],
+		&["calculate_absorption_forces"],
 	);
 }
 
