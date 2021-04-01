@@ -2,6 +2,9 @@
 
 extern crate atomecs as lib;
 extern crate nalgebra;
+use crate::laser::cooling::CoolingLight;
+use crate::lib::laser::force::EmissionForceOption;
+use atomecs::laser::photons_scattered::ScatteringFluctuationsOption;
 use lib::atom::{AtomicTransition, Position, Velocity};
 use lib::atom_sources::central_creator::CentralCreator;
 use lib::atom_sources::emit::AtomNumberToEmit;
@@ -12,12 +15,13 @@ use lib::ecs;
 use lib::integrator::Timestep;
 use lib::laser;
 use lib::laser::gaussian::GaussianBeam;
+use lib::magnetic::quadrupole::QuadrupoleField3D;
 use lib::output::file::Text;
 use lib::output::{file, xyz_file};
 use lib::shapes::Cuboid;
 use lib::sim_region::{SimulationVolume, VolumeType};
 use nalgebra::Vector3;
-use specs::{Builder, World};
+use specs::{Builder, RunNow, World};
 use std::time::Instant;
 
 fn main() {
@@ -55,10 +59,113 @@ fn main() {
             name: format!("{}", "cross_beam_basic"),
         })
         .build();
+    // BEGIN MOT PART
+
+    world
+        .create_entity()
+        .with(QuadrupoleField3D::gauss_per_cm(1.0, Vector3::z()))
+        .with(Position::new())
+        .build();
+
+    let detuning = -2.;
+    let power = 0.1; //W total power of all Lasers together
+    let radius = 1.0e-2 / (2.0 * 2.0_f64.sqrt()); // 10mm 1/e^2 diameter
+
+    // Horizontal beams along z
+    world
+        .create_entity()
+        .with(GaussianBeam {
+            intersection: Vector3::new(0.0, 0.0, 0.0),
+            e_radius: radius,
+            power: power / 6.0,
+            direction: Vector3::z(),
+        })
+        .with(CoolingLight::for_species(
+            AtomicTransition::strontium_red(),
+            detuning,
+            -1,
+        ))
+        .build();
+    world
+        .create_entity()
+        .with(GaussianBeam {
+            intersection: Vector3::new(0.0, 0.0, 0.0),
+            e_radius: radius,
+            power: power / 6.0,
+            direction: -Vector3::z(),
+        })
+        .with(CoolingLight::for_species(
+            AtomicTransition::strontium_red(),
+            detuning,
+            -1,
+        ))
+        .build();
+
+    // Angled vertical beams
+    world
+        .create_entity()
+        .with(GaussianBeam {
+            intersection: Vector3::new(0.0, 0.0, 0.0),
+            e_radius: radius,
+            power: power / 6.,
+            direction: Vector3::new(1.0, 1.0, 0.0).normalize(),
+        })
+        .with(CoolingLight::for_species(
+            AtomicTransition::strontium_red(),
+            detuning,
+            1,
+        ))
+        .build();
+    world
+        .create_entity()
+        .with(GaussianBeam {
+            intersection: Vector3::new(0.0, 0.0, 0.0),
+            e_radius: radius,
+            power: power / 6.,
+            direction: Vector3::new(1.0, -1.0, 0.0).normalize(),
+        })
+        .with(CoolingLight::for_species(
+            AtomicTransition::strontium_red(),
+            detuning,
+            1,
+        ))
+        .build();
+    world
+        .create_entity()
+        .with(GaussianBeam {
+            intersection: Vector3::new(0.0, 0.0, 0.0),
+            e_radius: radius,
+            power: power / 6.,
+            direction: Vector3::new(-1.0, 1.0, 0.0).normalize(),
+        })
+        .with(CoolingLight::for_species(
+            AtomicTransition::strontium_red(),
+            detuning,
+            1,
+        ))
+        .build();
+    world
+        .create_entity()
+        .with(GaussianBeam {
+            intersection: Vector3::new(0.0, 0.0, 0.0),
+            e_radius: radius,
+            power: power / 6.,
+            direction: Vector3::new(-1.0, -1.0, 0.0).normalize(),
+        })
+        .with(CoolingLight::for_species(
+            AtomicTransition::strontium_red(),
+            detuning,
+            1,
+        ))
+        .build();
+    world.add_resource(EmissionForceOption::default());
+    world.add_resource(ScatteringFluctuationsOption::default());
+
+    // END MOT part
 
     // Create dipole laser.
-    let power = 3.0;
-    let e_radius = 32.0e-6 / (2.0_f64.sqrt());
+    let power = 10.0;
+    let e_radius = 80.0e-6 / (2.0_f64.sqrt());
 
     let gaussian_beam = GaussianBeam {
         intersection: Vector3::new(0.0, 0.0, 0.0),
@@ -87,7 +194,7 @@ fn main() {
         intersection: Vector3::new(0.0, 0.0, 0.0),
         e_radius: e_radius,
         power: power,
-        direction: Vector3::y(),
+        direction: Vector3::new(0.924, 0.259, 1.).normalize(),
     };
     world
         .create_entity()
@@ -96,8 +203,8 @@ fn main() {
             wavelength: 1064.0e-9,
         })
         .with(laser::gaussian::GaussianReferenceFrame {
-            x_vector: Vector3::x(),
-            y_vector: Vector3::z(),
+            x_vector: Vector3::new(0., 0.96810035, -0.25056281),
+            y_vector: Vector3::new(-0.74536307, 0.16703989, 0.64539258),
             ellipticity: 0.0,
         })
         .with(laser::gaussian::make_gaussian_rayleigh_range(
@@ -108,9 +215,9 @@ fn main() {
     // creating the entity that represents the source
     //
     // contains a central creator
-    let number_to_emit = 100;
-    let size_of_cube = 1.0e-5;
-    let speed = 0.05; // m/s
+    let number_to_emit = 1_000;
+    let size_of_cube = 1.0e-3;
+    let speed = 0.1; // m/s
 
     world
         .create_entity()
@@ -122,8 +229,8 @@ fn main() {
             mass: 87.0,
             ratio: 1.0,
         }]))
-        .with(AtomicTransition::strontium_red())
         .with(AtomicTransition::strontium())
+        .with(AtomicTransition::strontium_red())
         .with(AtomNumberToEmit {
             number: number_to_emit,
         })
@@ -147,6 +254,15 @@ fn main() {
         .build();
 
     // Run the simulation for a number of steps.
+    for _i in 0..10_000 {
+        dispatcher.dispatch(&mut world.res);
+        world.maintain();
+    }
+    let mut switcher_system = dipole::transition_switcher::SwitchTransitionSystem;
+    let mut delete_beams_system = dipole::transition_switcher::DisableMOTBeamsSystem;
+    switcher_system.run_now(&world.res);
+    delete_beams_system.run_now(&world.res);
+    println!("Switched from MOT to Dipole setup");
     for _i in 0..10_000 {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
