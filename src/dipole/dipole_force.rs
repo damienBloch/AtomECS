@@ -6,7 +6,7 @@ use crate::dipole::intensity_gradient::LaserIntensityGradientSamplers;
 
 use specs::{Join, ReadStorage, System, WriteStorage};
 extern crate nalgebra;
-use crate::atom::AtomicTransition;
+use crate::dipole::atom::AtomicDipoleTransition;
 use crate::dipole::dipole_beam::{DipoleLight, DipoleLightIndex};
 use nalgebra::Vector3;
 
@@ -18,7 +18,7 @@ impl<'a> System<'a> for ApplyDipoleForceSystem {
     type SystemData = (
         ReadStorage<'a, DipoleLight>,
         ReadStorage<'a, DipoleLightIndex>,
-        ReadStorage<'a, AtomicTransition>,
+        ReadStorage<'a, AtomicDipoleTransition>,
         ReadStorage<'a, LaserIntensityGradientSamplers>,
         WriteStorage<'a, Force>,
     );
@@ -65,7 +65,7 @@ pub mod tests {
         test_world.register::<DipoleLight>();
         test_world.register::<Force>();
         test_world.register::<LaserIntensityGradientSamplers>();
-        test_world.register::<AtomicTransition>();
+        test_world.register::<AtomicDipoleTransition>();
 
         test_world
             .create_entity()
@@ -78,7 +78,7 @@ pub mod tests {
             })
             .build();
 
-        let transition = AtomicTransition::strontium();
+        let transition = AtomicDipoleTransition::strontium();
         let atom1 = test_world
             .create_entity()
             .with(Force {
@@ -116,7 +116,7 @@ pub mod tests {
         test_world.register::<DipoleLight>();
         test_world.register::<Force>();
         test_world.register::<LaserIntensityGradientSamplers>();
-        test_world.register::<AtomicTransition>();
+        test_world.register::<AtomicDipoleTransition>();
 
         test_world
             .create_entity()
@@ -129,7 +129,7 @@ pub mod tests {
             })
             .build();
 
-        let transition = AtomicTransition::strontium();
+        let transition = AtomicDipoleTransition::strontium();
         let atom1 = test_world
             .create_entity()
             .with(Force {

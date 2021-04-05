@@ -68,7 +68,7 @@ fn main() {
         .build();
 
     let detuning = -0.15; //MHz
-    let power = 0.005; //W total power of all Lasers together
+    let power = 0.01; //W total power of all Lasers together
     let radius = 1.0e-2 / (2.0 * 2.0_f64.sqrt()); // 10mm 1/e^2 diameter
 
     // Horizontal beams along z
@@ -237,7 +237,7 @@ fn main() {
         .build();
 
     // Define timestep
-    world.add_resource(Timestep { delta: 1.0e-6 });
+    world.add_resource(Timestep { delta: 2.0e-6 });
     // Use a simulation bound so that atoms that escape the capture region are deleted from the simulation
     world
         .create_entity()
@@ -257,12 +257,17 @@ fn main() {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
     }
-    let mut switcher_system = dipole::transition_switcher::SwitchTransitionSystem;
-    let mut delete_beams_system = dipole::transition_switcher::DisableMOTBeamsSystem;
+    let mut switcher_system =
+        dipole::transition_switcher::AttachAtomicDipoleTransitionToAtomsSystem;
     switcher_system.run_now(&world.res);
+    for _i in 0..30_000 {
+        dispatcher.dispatch(&mut world.res);
+        world.maintain();
+    }
+    let mut delete_beams_system = dipole::transition_switcher::DisableMOTBeamsSystem;
     delete_beams_system.run_now(&world.res);
     println!("Switched from MOT to Dipole setup");
-    for _i in 0..60_000 {
+    for _i in 0..30_000 {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
     }
