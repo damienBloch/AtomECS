@@ -257,11 +257,20 @@ fn main() {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
     }
+    let mut ramp_down_system = dipole::transition_switcher::RampMOTBeamsSystem;
+    world.add_resource(dipole::transition_switcher::MOTAbsoluteDetuningRampRate {
+        absolute_rate: 2.0e6, // Hz / s
+    });
+    world.add_resource(dipole::transition_switcher::MOTRelativePowerRampRate {
+        relative_rate: 6.0e-4, // 1 / s
+    });
+
     let mut switcher_system =
         dipole::transition_switcher::AttachAtomicDipoleTransitionToAtomsSystem;
     switcher_system.run_now(&world.res);
     for _i in 0..30_000 {
         dispatcher.dispatch(&mut world.res);
+        ramp_down_system.run_now(&world.res);
         world.maintain();
     }
     let mut delete_beams_system = dipole::transition_switcher::DisableMOTBeamsSystem;
