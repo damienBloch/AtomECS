@@ -1,27 +1,12 @@
 extern crate rayon;
 extern crate specs;
-use crate::atom::AtomicTransition;
+use crate::atom::{Atom, AtomicTransition, Kind};
+use crate::destructor::ToBeDestroyed;
+use crate::dipole::atom::AtomicDipoleTransition;
 use crate::dipole::dipole_beam::DipoleLight;
 use crate::laser::cooling::CoolingLight;
 use specs::{Entities, Join, LazyUpdate, Read, ReadStorage, System};
 extern crate nalgebra;
-
-pub struct SwitchTransitionSystem;
-
-impl<'a> System<'a> for SwitchTransitionSystem {
-    type SystemData = (
-        Entities<'a>,
-        ReadStorage<'a, AtomicTransition>,
-        Read<'a, LazyUpdate>,
-    );
-
-    fn run(&mut self, (ent, atomic_transition, updater): Self::SystemData) {
-        for (ent, _atomic_transition) in (&ent, &atomic_transition).join() {
-            updater.remove::<AtomicTransition>(ent);
-            updater.insert(ent, AtomicTransition::strontium());
-        }
-    }
-}
 
 pub struct DisableMOTBeamsSystem;
 
@@ -30,11 +15,44 @@ impl<'a> System<'a> for DisableMOTBeamsSystem {
         Entities<'a>,
         ReadStorage<'a, CoolingLight>,
         ReadStorage<'a, DipoleLight>,
+        Read<'a, LazyUpdate>,
     );
 
-    fn run(&mut self, (ents, cooling, dipole): Self::SystemData) {
+    fn run(&mut self, (ents, cooling, dipole, updater): Self::SystemData) {
         for (entity, _cooling, _dipole) in (&ents, &cooling, !&dipole).join() {
-            ents.delete(entity).expect("Could not delete beam entity!");
+            updater.insert(entity, ToBeDestroyed);
+        }
+    }
+}
+
+pub struct AttachAtomicDipoleTransitionToAtomsSystem;
+
+impl<'a> System<'a> for AttachAtomicDipoleTransitionToAtomsSystem {
+    type SystemData = (
+        Entities<'a>,
+        ReadStorage<'a, Atom>,
+        ReadStorage<'a, AtomicTransition>,
+        ReadStorage<'a, AtomicDipoleTransition>,
+        Read<'a, LazyUpdate>,
+    );
+
+    fn run(
+        &mut self,
+        (ents, atom, atomic_transition, atomic_dipole_transition, updater): Self::SystemData,
+    ) {
+        for (entity, _atom, atominfo, _atomdipole_info) in
+            (&ents, &atom, &atomic_transition, !&atomic_dipole_transition).join()
+        {
+            updater.insert(
+                entity,
+                match atominfo.kind {
+                    Kind::Rubidium => AtomicDipoleTransition::rubidium(),
+                    Kind::Strontium => AtomicDipoleTransition::strontium(),
+                    Kind::StrontiumRed => AtomicDipoleTransition::strontium(),
+                    Kind::Erbium => AtomicDipoleTransition::erbium(),
+                    Kind::Erbium401 => AtomicDipoleTransition::erbium_401(),
+                },
+            );
         }
     }
 }

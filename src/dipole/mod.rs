@@ -1,6 +1,9 @@
+//pub mod atom;
+pub mod atom;
 pub mod dipole_beam;
 pub mod dipole_force;
 pub mod intensity_gradient;
+pub mod transition_switcher;
 
 extern crate specs;
 use crate::initiate::NewlyCreated;

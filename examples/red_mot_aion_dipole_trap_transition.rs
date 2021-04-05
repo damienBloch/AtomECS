@@ -56,7 +56,7 @@ fn main() {
             initialized: false,
             scale_factor: 20000.,
             discard_place: Vector3::new(2., 2., 2.),
-            name: format!("{}", "cross_beam_basic"),
+            name: format!("{}", "cross_beam_transition_exp"),
         })
         .build();
     // BEGIN MOT PART
@@ -67,8 +67,8 @@ fn main() {
         .with(Position::new())
         .build();
 
-    let detuning = -2.;
-    let power = 0.1; //W total power of all Lasers together
+    let detuning = -0.15; //MHz
+    let power = 0.005; //W total power of all Lasers together
     let radius = 1.0e-2 / (2.0 * 2.0_f64.sqrt()); // 10mm 1/e^2 diameter
 
     // Horizontal beams along z
@@ -165,7 +165,7 @@ fn main() {
 
     // Create dipole laser.
     let power = 10.0;
-    let e_radius = 80.0e-6 / (2.0_f64.sqrt());
+    let e_radius = 100.0e-6 / (2.0_f64.sqrt());
 
     let gaussian_beam = GaussianBeam {
         intersection: Vector3::new(0.0, 0.0, 0.0),
@@ -194,7 +194,7 @@ fn main() {
         intersection: Vector3::new(0.0, 0.0, 0.0),
         e_radius: e_radius,
         power: power,
-        direction: Vector3::new(0.924, 0.259, 1.).normalize(),
+        direction: Vector3::y(),
     };
     world
         .create_entity()
@@ -203,8 +203,8 @@ fn main() {
             wavelength: 1064.0e-9,
         })
         .with(laser::gaussian::GaussianReferenceFrame {
-            x_vector: Vector3::new(0., 0.96810035, -0.25056281),
-            y_vector: Vector3::new(-0.74536307, 0.16703989, 0.64539258),
+            x_vector: Vector3::x(),
+            y_vector: Vector3::z(),
             ellipticity: 0.0,
         })
         .with(laser::gaussian::make_gaussian_rayleigh_range(
@@ -216,8 +216,8 @@ fn main() {
     //
     // contains a central creator
     let number_to_emit = 1_000;
-    let size_of_cube = 1.0e-3;
-    let speed = 0.1; // m/s
+    let size_of_cube = 1.0e-4;
+    let speed = 0.01; // m/s
 
     world
         .create_entity()
@@ -229,7 +229,6 @@ fn main() {
             mass: 87.0,
             ratio: 1.0,
         }]))
-        .with(AtomicTransition::strontium())
         .with(AtomicTransition::strontium_red())
         .with(AtomNumberToEmit {
             number: number_to_emit,
@@ -246,7 +245,7 @@ fn main() {
             pos: Vector3::new(0.0, 0.0, 0.0),
         })
         .with(Cuboid {
-            half_width: Vector3::new(0.0001, 0.0001, 0.0001), //(0.1, 0.01, 0.01)
+            half_width: Vector3::new(0.001, 0.001, 0.001), //(0.1, 0.01, 0.01)
         })
         .with(SimulationVolume {
             volume_type: VolumeType::Inclusive,
@@ -263,7 +262,7 @@ fn main() {
     switcher_system.run_now(&world.res);
     delete_beams_system.run_now(&world.res);
     println!("Switched from MOT to Dipole setup");
-    for _i in 0..10_000 {
+    for _i in 0..60_000 {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
     }
