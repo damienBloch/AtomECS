@@ -2,11 +2,10 @@
 
 extern crate atomecs as lib;
 extern crate nalgebra;
-use lib::atom::{AtomicTransition, Position, Velocity};
-use lib::atom_sources::central_creator::CentralCreator;
-use lib::atom_sources::emit::AtomNumberToEmit;
-use lib::atom_sources::mass::{MassDistribution, MassRatio};
-use lib::destructor::ToBeDestroyed;
+use crate::lib::laser::force::EmissionForceOption;
+use atomecs::laser::photons_scattered::ScatteringFluctuationsOption;
+use lib::atom;
+use lib::atom::{Position, Velocity};
 use lib::dipole;
 use lib::ecs;
 use lib::integrator::Timestep;
@@ -14,8 +13,6 @@ use lib::laser;
 use lib::laser::gaussian::GaussianBeam;
 use lib::output::file::Text;
 use lib::output::{file, xyz_file};
-use lib::shapes::Cuboid;
-use lib::sim_region::{SimulationVolume, VolumeType};
 use nalgebra::Vector3;
 use specs::{Builder, RunNow, World};
 use std::time::Instant;
@@ -52,13 +49,17 @@ fn main() {
             initialized: false,
             scale_factor: 20000.,
             discard_place: Vector3::new(2., 2., 2.),
-            name: format!("{}", "cross_beam_basic_test"),
+            name: format!("{}", "cross_beam_transition_exp"),
         })
         .build();
+    // BEGIN MOT PART
+
+    // Horizontal beams along z
+    // END MOT part
 
     // Create dipole laser.
     let power = 10.0;
-    let e_radius = 60.0e-6 / (2.0_f64.sqrt());
+    let e_radius = 100.0e-6 / (2.0_f64.sqrt());
 
     let gaussian_beam = GaussianBeam {
         intersection: Vector3::new(0.0, 0.0, 0.0),
@@ -105,54 +106,46 @@ fn main() {
             &gaussian_beam,
         ))
         .build();
-    // creating the entity that represents the source
-    //
-    // contains a central creator
-    let number_to_emit = 100;
-    let size_of_cube = 1.0e-5;
-    let speed = 0.05; // m/s
 
-    world
-        .create_entity()
-        .with(CentralCreator::new_uniform_cubic(size_of_cube, speed))
-        .with(Position {
-            pos: Vector3::new(0.0, 0.0, 0.0),
-        })
-        .with(MassDistribution::new(vec![MassRatio {
-            mass: 87.0,
-            ratio: 1.0,
-        }]))
-        .with(AtomicTransition::strontium_red())
-        .with(AtomNumberToEmit {
-            number: number_to_emit,
-        })
-        .with(ToBeDestroyed)
-        .build();
+    world.add_resource(EmissionForceOption::default());
+    world.add_resource(ScatteringFluctuationsOption::default());
 
     // Define timestep
-    world.add_resource(Timestep { delta: 1.0e-7 });
+    world.add_resource(Timestep { delta: 1.0e-6 });
     // Use a simulation bound so that atoms that escape the capture region are deleted from the simulation
-    world
+    let atom1 = world
         .create_entity()
-        .with(Position {
-            pos: Vector3::new(0.0, 0.0, 0.0),
+        .with(atom::Mass { value: 87.0 })
+        .with(atom::Force::new())
+        .with(atom::Position {
+            pos: Vector3::new(100.0e-6, 10.0e-6, 0.0),
         })
-        .with(Cuboid {
-            half_width: Vector3::new(0.01, 0.01, 0.01), //(0.1, 0.01, 0.01)
-        })
-        .with(SimulationVolume {
-            volume_type: VolumeType::Inclusive,
-        })
+        .with(atom::AtomicTransition::strontium_red())
+        .with(atom::Atom)
+        .with(lib::initiate::NewlyCreated)
         .build();
-
-    let mut switcher_system =
-        dipole::transition_switcher::AttachAtomicDipoleTransitionToAtomsSystem;
-    // Run the simulation for a number of steps.
-    for _i in 0..20_000 {
+    for _i in 0..1 {
         dispatcher.dispatch(&mut world.res);
-        switcher_system.run_now(&world.res);
         world.maintain();
     }
 
+    let mut switcher_system =
+        dipole::transition_switcher::AttachAtomicDipoleTransitionToAtomsSystem;
+    switcher_system.run_now(&world.res);
+
+    for _i in 0..3 {
+        dispatcher.dispatch(&mut world.res);
+        world.maintain();
+    }
+
+    let force = world.read_storage::<atom::Force>();
+    let sim_result_force = force.get(atom1).expect("Entity not found!").force / (87.0);
+    let position = world.read_storage::<atom::Position>();
+    let sim_result_position = position.get(atom1).expect("Entity not found!").pos;
+
+    println!(
+        "force is: {} \n and pos is: {}",
+        sim_result_force, sim_result_position
+    );
     println!("Simulation completed in {} ms.", now.elapsed().as_millis());
 }

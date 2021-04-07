@@ -171,29 +171,6 @@ fn main() {
         intersection: Vector3::new(0.0, 0.0, 0.0),
         e_radius: e_radius,
         power: power,
-        direction: Vector3::x(),
-    };
-    world
-        .create_entity()
-        .with(gaussian_beam)
-        .with(dipole::dipole_beam::DipoleLight {
-            wavelength: 1064.0e-9,
-        })
-        .with(laser::gaussian::GaussianReferenceFrame {
-            x_vector: Vector3::y(),
-            y_vector: Vector3::z(),
-            ellipticity: 0.0,
-        })
-        .with(laser::gaussian::make_gaussian_rayleigh_range(
-            &1064.0e-9,
-            &gaussian_beam,
-        ))
-        .build();
-
-    let gaussian_beam = GaussianBeam {
-        intersection: Vector3::new(0.0, 0.0, 0.0),
-        e_radius: e_radius,
-        power: power,
         direction: Vector3::y(),
     };
     world
@@ -212,10 +189,32 @@ fn main() {
             &gaussian_beam,
         ))
         .build();
+    let gaussian_beam = GaussianBeam {
+        intersection: Vector3::new(0.0, 0.0, 0.0),
+        e_radius: e_radius,
+        power: power,
+        direction: Vector3::x(),
+    };
+    world
+        .create_entity()
+        .with(gaussian_beam)
+        .with(dipole::dipole_beam::DipoleLight {
+            wavelength: 1064.0e-9,
+        })
+        .with(laser::gaussian::GaussianReferenceFrame {
+            x_vector: Vector3::y(),
+            y_vector: Vector3::z(),
+            ellipticity: 0.0,
+        })
+        .with(laser::gaussian::make_gaussian_rayleigh_range(
+            &1064.0e-9,
+            &gaussian_beam,
+        ))
+        .build();
     // creating the entity that represents the source
     //
     // contains a central creator
-    let number_to_emit = 1_000;
+    let number_to_emit = 1;
     let size_of_cube = 1.0e-4;
     let speed = 0.01; // m/s
 
@@ -276,7 +275,7 @@ fn main() {
     let mut delete_beams_system = dipole::transition_switcher::DisableMOTBeamsSystem;
     delete_beams_system.run_now(&world.res);
     println!("Switched from MOT to Dipole setup");
-    for _i in 0..30_000 {
+    for _i in 0..60_000 {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
     }
