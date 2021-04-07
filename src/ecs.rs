@@ -7,12 +7,13 @@ use crate::atom;
 use crate::atom::ClearForceSystem;
 use crate::atom_sources;
 use crate::destructor::DeleteToBeDestroyedEntitiesSystem;
+use crate::integrator::EulerIntegrationSystem;
 //use crate::detector;
 //use crate::detector::DetectingInfo;
 use crate::dipole;
 use crate::gravity::ApplyGravitationalForceSystem;
 use crate::initiate::DeflagNewAtomsSystem;
-use crate::integrator::{AddOldForceToNewAtomsSystem, Step, VelocityVerletIntegrationSystem};
+use crate::integrator::Step;
 use crate::laser;
 use crate::laser::repump::Dark;
 use crate::magnetic;
@@ -58,7 +59,7 @@ impl AtomecsDispatcherBuilder {
 
 	pub fn add_integration_systems(&mut self) {
 		&self.builder.add(
-			VelocityVerletIntegrationSystem,
+			EulerIntegrationSystem,
 			"integrator",
 			&[
 				"calculate_absorption_forces",
@@ -66,7 +67,6 @@ impl AtomecsDispatcherBuilder {
 				"add_gravity",
 			],
 		);
-		&self.builder.add(AddOldForceToNewAtomsSystem, "", &[]);
 	}
 
 	pub fn add_frame_end_systems(&mut self) {
