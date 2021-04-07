@@ -55,8 +55,8 @@ fn main() {
             overwrite: true,
             initialized: false,
             scale_factor: 20000.,
-            discard_place: Vector3::new(2., 2., 2.),
-            name: format!("{}", "cross_beam_transition_exp_with_grav"),
+            discard_place: Vector3::new(20., 20., 20.),
+            name: format!("{}", "cross_beam_transition_exp_6"),
         })
         .build();
     // BEGIN MOT PART
@@ -64,10 +64,12 @@ fn main() {
     world
         .create_entity()
         .with(QuadrupoleField3D::gauss_per_cm(1.0, Vector3::z()))
-        .with(Position::new())
+        .with(Position {
+            pos: Vector3::new(0.0, 0.0, 0.0e-4),
+        })
         .build();
 
-    let detuning = -0.15; //MHz
+    let detuning = -0.12; //MHz
     let power = 0.01; //W total power of all Lasers together
     let radius = 1.0e-2 / (2.0 * 2.0_f64.sqrt()); // 10mm 1/e^2 diameter
 
@@ -214,7 +216,7 @@ fn main() {
     // creating the entity that represents the source
     //
     // contains a central creator
-    let number_to_emit = 1_000;
+    let number_to_emit = 1_00;
     let size_of_cube = 1.0e-4;
     let speed = 0.01; // m/s
 
@@ -239,7 +241,7 @@ fn main() {
     world.add_resource(Timestep { delta: 1.0e-7 });
 
     //enable gravity
-    world.add_resource(lib::gravity::ApplyGravityOption);
+    //world.add_resource(lib::gravity::ApplyGravityOption);
     // Use a simulation bound so that atoms that escape the capture region are deleted from the simulation
     world
         .create_entity()
@@ -255,7 +257,7 @@ fn main() {
         .build();
 
     // Run the simulation for a number of steps.
-    for _i in 0..100_000 {
+    for _i in 0..200_000 {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
     }
@@ -264,13 +266,13 @@ fn main() {
         absolute_rate: 2.0e6, // Hz / s
     });
     world.add_resource(dipole::transition_switcher::MOTRelativePowerRampRate {
-        relative_rate: 6.0e-4, // 1 / s
+        relative_rate: 1.0e-60, // 1 / s
     });
 
     let mut switcher_system =
         dipole::transition_switcher::AttachAtomicDipoleTransitionToAtomsSystem;
     switcher_system.run_now(&world.res);
-    for _i in 0..300_000 {
+    for _i in 0..500_000 {
         dispatcher.dispatch(&mut world.res);
         ramp_down_system.run_now(&world.res);
         world.maintain();
@@ -278,7 +280,7 @@ fn main() {
     let mut delete_beams_system = dipole::transition_switcher::DisableMOTBeamsSystem;
     delete_beams_system.run_now(&world.res);
     println!("Switched from MOT to Dipole setup");
-    for _i in 0..600_000 {
+    for _i in 0..400_000 {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
     }
