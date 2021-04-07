@@ -52,7 +52,7 @@ fn main() {
             initialized: false,
             scale_factor: 20000.,
             discard_place: Vector3::new(2., 2., 2.),
-            name: format!("{}", "cross_beam_basic_test"),
+            name: format!("{}", "cross_beam_basic_euler_1e-7"),
         })
         .build();
 
@@ -148,7 +148,7 @@ fn main() {
     let mut switcher_system =
         dipole::transition_switcher::AttachAtomicDipoleTransitionToAtomsSystem;
     // Run the simulation for a number of steps.
-    for _i in 0..20_000 {
+    for _i in 0..2_000_000 {
         dispatcher.dispatch(&mut world.res);
         switcher_system.run_now(&world.res);
         world.maintain();

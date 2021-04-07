@@ -35,12 +35,12 @@ fn main() {
 
     // Configure simulation output.
     builder = builder.with(
-        file::new::<Position, Text>("pos_dipole.txt".to_string(), 100),
+        file::new::<Position, Text>("pos_dipole.txt".to_string(), 1000),
         "",
         &[],
     );
     builder = builder.with(
-        file::new::<Velocity, Text>("vel_dipole.txt".to_string(), 100),
+        file::new::<Velocity, Text>("vel_dipole.txt".to_string(), 1000),
         "",
         &[],
     );
@@ -56,7 +56,7 @@ fn main() {
             initialized: false,
             scale_factor: 20000.,
             discard_place: Vector3::new(2., 2., 2.),
-            name: format!("{}", "cross_beam_transition_exp"),
+            name: format!("{}", "cross_beam_transition_exp_with_grav"),
         })
         .build();
     // BEGIN MOT PART
@@ -214,7 +214,7 @@ fn main() {
     // creating the entity that represents the source
     //
     // contains a central creator
-    let number_to_emit = 1;
+    let number_to_emit = 1_000;
     let size_of_cube = 1.0e-4;
     let speed = 0.01; // m/s
 
@@ -236,7 +236,10 @@ fn main() {
         .build();
 
     // Define timestep
-    world.add_resource(Timestep { delta: 2.0e-6 });
+    world.add_resource(Timestep { delta: 1.0e-7 });
+
+    //enable gravity
+    world.add_resource(lib::gravity::ApplyGravityOption);
     // Use a simulation bound so that atoms that escape the capture region are deleted from the simulation
     world
         .create_entity()
@@ -244,7 +247,7 @@ fn main() {
             pos: Vector3::new(0.0, 0.0, 0.0),
         })
         .with(Cuboid {
-            half_width: Vector3::new(0.001, 0.001, 0.001), //(0.1, 0.01, 0.01)
+            half_width: Vector3::new(0.001, 0.001, 0.001),
         })
         .with(SimulationVolume {
             volume_type: VolumeType::Inclusive,
@@ -252,7 +255,7 @@ fn main() {
         .build();
 
     // Run the simulation for a number of steps.
-    for _i in 0..10_000 {
+    for _i in 0..100_000 {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
     }
@@ -267,7 +270,7 @@ fn main() {
     let mut switcher_system =
         dipole::transition_switcher::AttachAtomicDipoleTransitionToAtomsSystem;
     switcher_system.run_now(&world.res);
-    for _i in 0..30_000 {
+    for _i in 0..300_000 {
         dispatcher.dispatch(&mut world.res);
         ramp_down_system.run_now(&world.res);
         world.maintain();
@@ -275,7 +278,7 @@ fn main() {
     let mut delete_beams_system = dipole::transition_switcher::DisableMOTBeamsSystem;
     delete_beams_system.run_now(&world.res);
     println!("Switched from MOT to Dipole setup");
-    for _i in 0..60_000 {
+    for _i in 0..600_000 {
         dispatcher.dispatch(&mut world.res);
         world.maintain();
     }
