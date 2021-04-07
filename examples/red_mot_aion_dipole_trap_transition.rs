@@ -56,7 +56,7 @@ fn main() {
             initialized: false,
             scale_factor: 20000.,
             discard_place: Vector3::new(20., 20., 20.),
-            name: format!("{}", "cross_beam_transition_exp_6"),
+            name: format!("{}", "cross_beam_transition_gravity_4"),
         })
         .build();
     // BEGIN MOT PART
@@ -65,7 +65,7 @@ fn main() {
         .create_entity()
         .with(QuadrupoleField3D::gauss_per_cm(1.0, Vector3::z()))
         .with(Position {
-            pos: Vector3::new(0.0, 0.0, 0.0e-4),
+            pos: Vector3::new(0.0, 0.0, 100.0e-6),
         })
         .build();
 
@@ -216,7 +216,7 @@ fn main() {
     // creating the entity that represents the source
     //
     // contains a central creator
-    let number_to_emit = 1_00;
+    let number_to_emit = 1_000;
     let size_of_cube = 1.0e-4;
     let speed = 0.01; // m/s
 
@@ -241,7 +241,7 @@ fn main() {
     world.add_resource(Timestep { delta: 1.0e-7 });
 
     //enable gravity
-    //world.add_resource(lib::gravity::ApplyGravityOption);
+    world.add_resource(lib::gravity::ApplyGravityOption);
     // Use a simulation bound so that atoms that escape the capture region are deleted from the simulation
     world
         .create_entity()
