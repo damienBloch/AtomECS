@@ -3,6 +3,8 @@ use crate::constant::C;
 use serde::{Deserialize, Serialize};
 use specs::{Component, VecStorage};
 
+/// Component which holds information about the physical properties of the main
+/// transition that is relevant for dipole cooling. Similar to `atom::AtomicTransition`.
 #[derive(Deserialize, Serialize, Clone, Copy)]
 pub struct AtomicDipoleTransition {
     /// Frequency of the laser cooling transition, Hz.
@@ -65,6 +67,7 @@ impl AtomicDipoleTransition {
         }
     }
 
+    /// calculates the natural linewidth in units of rad/s
     pub fn gamma(&self) -> f64 {
         self.linewidth * 2.0 * std::f64::consts::PI
     }

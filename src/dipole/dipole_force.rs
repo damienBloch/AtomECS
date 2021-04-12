@@ -1,17 +1,17 @@
 extern crate rayon;
 extern crate specs;
 use crate::constant;
-
 use crate::dipole::intensity_gradient::LaserIntensityGradientSamplers;
-
 use specs::{Join, ReadStorage, System, WriteStorage};
 extern crate nalgebra;
+use crate::atom::Force;
 use crate::dipole::atom::AtomicDipoleTransition;
 use crate::dipole::dipole_beam::{DipoleLight, DipoleLightIndex};
 use nalgebra::Vector3;
 
-use crate::atom::Force;
-
+/// System that calculates the forces exerted onto the atoms by the dipole laser beams
+/// It uses the `LaserIntensityGradientSamplers` and the properties of the `DipoleLight`
+/// to add the respective amount of force to `Force`
 pub struct ApplyDipoleForceSystem;
 
 impl<'a> System<'a> for ApplyDipoleForceSystem {

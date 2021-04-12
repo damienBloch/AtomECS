@@ -41,10 +41,14 @@ impl Component for LaserIntensityGradientSamplers {
     type Storage = VecStorage<Self>;
 }
 
-/// System that calculates the intensity of DipoleLight entities
+/// System that calculates the intensity gradient of entities that represent
+/// a dipole laser beam
 ///
-/// So far, the only intensity distribution implemented as a component for the use along
-/// with `DipoleLight` is `GaussianBeam`.
+/// So far, the only intensity distribution implemented is`GaussianBeam`. Additionally
+/// the system also uses `GaussianRayleighRange` for axial divergence and
+/// `GaussianReferenceFrame` to account for different ellipiticies in the future.
+/// The result is stored in the `LaserIntensityGradientSamplers` component that each
+/// atom is associated with.
 pub struct SampleLaserIntensityGradientSystem;
 impl<'a> System<'a> for SampleLaserIntensityGradientSystem {
     type SystemData = (

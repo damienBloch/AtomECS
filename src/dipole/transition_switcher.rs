@@ -12,6 +12,9 @@ use specs::ReadExpect;
 use specs::{Entities, Join, LazyUpdate, Read, ReadStorage, System, WriteStorage};
 extern crate nalgebra;
 
+/// System that globally deletes all `CoolingLight` entities that do not have
+/// a `DipoleLight`. This could be used to speed up the simulation after a completed MOT power-ramp
+/// and transition into a pure dipole trap.
 pub struct DisableMOTBeamsSystem;
 
 impl<'a> System<'a> for DisableMOTBeamsSystem {
@@ -29,6 +32,8 @@ impl<'a> System<'a> for DisableMOTBeamsSystem {
     }
 }
 
+/// Depending on the kind of `AtomicTransition`, this system associates the atom entities
+/// with an `AtomicDipoleTransition` so they are can be processed by the `ApplyDipoleForceSystem.`
 pub struct AttachAtomicDipoleTransitionToAtomsSystem;
 
 impl<'a> System<'a> for AttachAtomicDipoleTransitionToAtomsSystem {
@@ -61,21 +66,29 @@ impl<'a> System<'a> for AttachAtomicDipoleTransitionToAtomsSystem {
     }
 }
 
+/// Ressource that functions as a marker for a power ramp of the MOT beams and also contains its ramp rate.
 pub struct MOTRelativePowerRampRate {
     /// factor that is applied every second to the power (i.e. 0.9 means reduction by 10% every second)
     pub relative_rate: f64,
 }
 
+/// Ressource thatfunctions as a marker for a detuning ramp of the MOT beams and also contains its ramp rate.
 pub struct MOTAbsoluteDetuningRampRate {
     /// subtracting this amount every second, in Hz
     pub absolute_rate: f64,
 }
 
+/// Ressource that functions as a marker for a power ramp of the dipole beams and also contains its ramp rate.
 pub struct DipoleRelativePowerRampRate {
     /// factor that is applied every second to the power (i.e. 0.9 means reduction by 10% every second)
     pub relative_rate: f64,
 }
 
+/// System that reduces the power and detuning of the `CoolingLight` entities depending if the ressources `MOTRelativePowerRampRate`
+/// and `MOTAbsoluteDetuningRampRate` are present.
+///
+/// The rates are converted from a "per time" basis (from the ressources) to a "per frame" basis so this system can run unchanged
+/// every iteration step.
 pub struct RampMOTBeamsSystem;
 
 impl<'a> System<'a> for RampMOTBeamsSystem {
