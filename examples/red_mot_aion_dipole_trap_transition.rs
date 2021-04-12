@@ -56,7 +56,7 @@ fn main() {
             initialized: false,
             scale_factor: 20000.,
             discard_place: Vector3::new(20., 20., 20.),
-            name: format!("{}", "cross_beam_transition_gravity_4"),
+            name: format!("{}", "aion_transition_gravity_1000"),
         })
         .build();
     // BEGIN MOT PART
@@ -166,31 +166,9 @@ fn main() {
     // END MOT part
 
     // Create dipole laser.
-    let power = 10.0;
+    let power = 10.;
     let e_radius = 100.0e-6 / (2.0_f64.sqrt());
 
-    let gaussian_beam = GaussianBeam {
-        intersection: Vector3::new(0.0, 0.0, 0.0),
-        e_radius: e_radius,
-        power: power,
-        direction: Vector3::y(),
-    };
-    world
-        .create_entity()
-        .with(gaussian_beam)
-        .with(dipole::dipole_beam::DipoleLight {
-            wavelength: 1064.0e-9,
-        })
-        .with(laser::gaussian::GaussianReferenceFrame {
-            x_vector: Vector3::x(),
-            y_vector: Vector3::z(),
-            ellipticity: 0.0,
-        })
-        .with(laser::gaussian::make_gaussian_rayleigh_range(
-            &1064.0e-9,
-            &gaussian_beam,
-        ))
-        .build();
     let gaussian_beam = GaussianBeam {
         intersection: Vector3::new(0.0, 0.0, 0.0),
         e_radius: e_radius,
@@ -206,6 +184,29 @@ fn main() {
         .with(laser::gaussian::GaussianReferenceFrame {
             x_vector: Vector3::y(),
             y_vector: Vector3::z(),
+            ellipticity: 0.0,
+        })
+        .with(laser::gaussian::make_gaussian_rayleigh_range(
+            &1064.0e-9,
+            &gaussian_beam,
+        ))
+        .build();
+
+    let gaussian_beam = GaussianBeam {
+        intersection: Vector3::new(0.0, 0.0, 0.0),
+        e_radius: e_radius,
+        power: power,
+        direction: Vector3::new(0.924, 0.259, 1.).normalize(),
+    };
+    world
+        .create_entity()
+        .with(gaussian_beam)
+        .with(dipole::dipole_beam::DipoleLight {
+            wavelength: 1064.0e-9,
+        })
+        .with(laser::gaussian::GaussianReferenceFrame {
+            x_vector: Vector3::new(0., 0.96810035, -0.25056281),
+            y_vector: Vector3::new(-0.74536307, 0.16703989, 0.64539258),
             ellipticity: 0.0,
         })
         .with(laser::gaussian::make_gaussian_rayleigh_range(

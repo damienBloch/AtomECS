@@ -42,7 +42,7 @@ impl<'a> System<'a> for WriteToXYZFileSystem {
     );
 
     fn run(&mut self, (step_number, atom, velocity, position, mut xyz_helper): Self::SystemData) {
-        if (step_number.n % 1000 == 0 && step_number.n != 0) || step_number.n == 1 {
+        if (step_number.n % 100 == 0 && step_number.n != 0) || step_number.n == 1 {
             for helper in (&mut xyz_helper).join() {
                 let mut data_string = String::new();
                 if helper.initialized != true {
