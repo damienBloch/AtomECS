@@ -123,9 +123,14 @@ pub fn add_systems_to_dispatch(builder: &mut DispatcherBuilder<'static, 'static>
 		&["magnetics_clear"],
 	);
 	builder.add(
+		quadrupole::Sample2DQuadrupoleFieldSystem,
+		"magnetics_2dquadrupole",
+		&["magnetics_quadrupole"],
+	);
+	builder.add(
 		uniform::UniformMagneticFieldSystem,
 		"magnetics_uniform",
-		&["magnetics_quadrupole"],
+		&["magnetics_2dquadrupole"],
 	);
 	builder.add(
 		grid::SampleMagneticGridSystem,
@@ -158,6 +163,7 @@ pub fn add_systems_to_dispatch(builder: &mut DispatcherBuilder<'static, 'static>
 pub fn register_components(world: &mut World) {
 	world.register::<uniform::UniformMagneticField>();
 	world.register::<quadrupole::QuadrupoleField3D>();
+	world.register::<quadrupole::QuadrupoleField2D>();
 	world.register::<MagneticFieldSampler>();
 	world.register::<grid::PrecalculatedMagneticFieldGrid>();
 }
