@@ -117,3 +117,26 @@ impl<'a> System<'a> for RampMOTBeamsSystem {
             });
     }
 }
+
+pub struct RampDipoleBeamsSystem;
+
+impl<'a> System<'a> for RampDipoleBeamsSystem {
+    type SystemData = (
+        ReadStorage<'a, DipoleLight>,
+        WriteStorage<'a, GaussianBeam>,
+        ReadExpect<'a, DipoleRelativePowerRampRate>,
+        ReadExpect<'a, Timestep>,
+    );
+
+    fn run(&mut self, (dipole_light, mut gaussian_beam, power_rate, timestep): Self::SystemData) {
+        // convert rate per second to rate per step
+        let power_rate_factor = power_rate.relative_rate.powf(timestep.delta);
+        use rayon::prelude::ParallelIterator;
+        use specs::ParJoin;
+        (&dipole_light, &mut gaussian_beam)
+            .par_join()
+            .for_each(|(_dipole, mut gaussian)| {
+                gaussian.power = gaussian.power * power_rate_factor;
+            });
+    }
+}
