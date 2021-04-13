@@ -2,7 +2,10 @@ extern crate rayon;
 extern crate specs;
 use crate::atom::{Atom, Position, Velocity};
 use crate::integrator::Step;
+<<<<<<< HEAD
 use nalgebra::Vector3;
+=======
+>>>>>>> parent of 3f4ad52 (Revert "Merge branch 'xyz_files' into dipole-force")
 use specs::{Component, HashMapStorage, Join, ReadExpect, ReadStorage, System, WriteStorage};
 use std::fs::OpenOptions;
 use std::io::prelude::*;
@@ -11,7 +14,10 @@ pub struct XYZWriteHelper {
     pub overwrite: bool,
     pub initialized: bool,
     pub scale_factor: f64,
+<<<<<<< HEAD
     pub discard_place: Vector3<f64>,
+=======
+>>>>>>> parent of 3f4ad52 (Revert "Merge branch 'xyz_files' into dipole-force")
     pub name: String,
 }
 
@@ -21,7 +27,10 @@ impl Default for XYZWriteHelper {
             overwrite: true,
             initialized: false,
             scale_factor: 20000.,
+<<<<<<< HEAD
             discard_place: Vector3::new(0., 0., 0.),
+=======
+>>>>>>> parent of 3f4ad52 (Revert "Merge branch 'xyz_files' into dipole-force")
             name: format!("{}", "pos_xyz"),
         }
     }
@@ -42,9 +51,14 @@ impl<'a> System<'a> for WriteToXYZFileSystem {
     );
 
     fn run(&mut self, (step_number, atom, velocity, position, mut xyz_helper): Self::SystemData) {
+<<<<<<< HEAD
         if (step_number.n % 100 == 0 && step_number.n != 0) || step_number.n == 1 {
             for helper in (&mut xyz_helper).join() {
                 let mut data_string = String::new();
+=======
+        if step_number.n % 100 == 0 {
+            for helper in (&mut xyz_helper).join() {
+>>>>>>> parent of 3f4ad52 (Revert "Merge branch 'xyz_files' into dipole-force")
                 if helper.initialized != true {
                     if helper.overwrite == true {
                         use std::fs;
@@ -52,6 +66,7 @@ impl<'a> System<'a> for WriteToXYZFileSystem {
                             eprintln!("Couldn't delete old file: {}", e);
                         }
                     }
+<<<<<<< HEAD
                     data_string.push_str(format!("{}\n\n", (&atom).join().count()).as_str());
                     for _ in 0..(&atom).join().count() {
                         data_string.push_str(
@@ -64,6 +79,8 @@ impl<'a> System<'a> for WriteToXYZFileSystem {
                             .as_str(),
                         );
                     }
+=======
+>>>>>>> parent of 3f4ad52 (Revert "Merge branch 'xyz_files' into dipole-force")
                     helper.initialized = true;
                 }
                 let mut file = OpenOptions::new()
@@ -72,6 +89,10 @@ impl<'a> System<'a> for WriteToXYZFileSystem {
                     .create(true)
                     .open(format!("{}.xyz", helper.name).as_str())
                     .unwrap();
+<<<<<<< HEAD
+=======
+                let mut data_string = String::new();
+>>>>>>> parent of 3f4ad52 (Revert "Merge branch 'xyz_files' into dipole-force")
                 let atom_number = (&atom).join().count();
                 data_string.push_str(format!("{}\n\n", atom_number).as_str());
                 for (_, _, pos) in (&atom, &velocity, &position).join() {
@@ -142,7 +163,10 @@ pub mod tests {
                 overwrite: true,
                 initialized: false,
                 scale_factor: 20000.,
+<<<<<<< HEAD
                 discard_place: Vector3::new(0.0, 0.0, 0.0),
+=======
+>>>>>>> parent of 3f4ad52 (Revert "Merge branch 'xyz_files' into dipole-force")
                 name: format!("{}", "test_xyz"),
             })
             .build();

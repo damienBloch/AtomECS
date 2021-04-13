@@ -11,8 +11,6 @@ use crate::laser::sampler::LaserDetuningSamplers;
 use crate::magnetic::MagneticFieldSampler;
 use specs::{Component, Join, ReadStorage, System, VecStorage, WriteStorage};
 
-use crate::constant::PI;
-
 /// Represents the rate coefficient of the atom with respect to a specific CoolingLight entity
 #[derive(Clone, Copy)]
 pub struct RateCoefficient {
@@ -115,22 +113,21 @@ impl<'a> System<'a> for CalculateRateCoefficientsSystem {
 
                     let prefactor =
                         atominfo.rate_prefactor * intensities.contents[index.index].intensity;
+                    let gamma = atominfo.gamma();
 
                     let scatter1 =
                         0.25 * (cooling.polarization as f64 * costheta + 1.).powf(2.) * prefactor
-                            / (detunings.contents[index.index].detuning_sigma_plus.powf(2.)
-                                + (PI * atominfo.linewidth).powf(2.));
+                            / (detunings.contents[index.index].detuning_sigma_plus.powi(2)
+                                + (gamma / 2.0).powi(2));
 
                     let scatter2 =
-                        0.25 * (cooling.polarization as f64 * costheta - 1.).powf(2.) * prefactor
-                            / (detunings.contents[index.index]
-                                .detuning_sigma_minus
-                                .powf(2.)
-                                + (PI * atominfo.linewidth).powf(2.));
+                        0.25 * (cooling.polarization as f64 * costheta - 1.).powi(2) * prefactor
+                            / (detunings.contents[index.index].detuning_sigma_minus.powi(2)
+                                + (gamma / 2.0).powi(2));
 
                     let scatter3 = 0.5 * (1. - costheta.powf(2.)) * prefactor
-                        / (detunings.contents[index.index].detuning_pi.powf(2.)
-                            + (PI * atominfo.linewidth).powf(2.));
+                        / (detunings.contents[index.index].detuning_pi.powi(2)
+                            + (gamma / 2.0).powi(2));
                     rates.contents[index.index].rate = scatter1 + scatter2 + scatter3;
                 });
         }
@@ -143,7 +140,6 @@ pub mod tests {
     use super::*;
 
     extern crate specs;
-    use crate::constant::PI;
     use crate::laser::cooling::{CoolingLight, CoolingLightIndex};
     use assert_approx_eq::assert_approx_eq;
     use specs::{Builder, RunNow, World};
@@ -222,11 +218,11 @@ pub mod tests {
 
         let man_pref = AtomicTransition::strontium().rate_prefactor * intensity;
         let scatter1 = 0.25 * man_pref
-            / (detuning.powf(2.0) + (PI * AtomicTransition::strontium().linewidth).powf(2.0));
+            / (detuning.powf(2.0) + (AtomicTransition::strontium().gamma() / 2.).powf(2.0));
         let scatter2 = 0.25 * man_pref
-            / (detuning.powf(2.0) + (PI * AtomicTransition::strontium().linewidth).powf(2.0));
+            / (detuning.powf(2.0) + (AtomicTransition::strontium().gamma() / 2.).powf(2.0));
         let scatter3 = 0.5 * man_pref
-            / (detuning.powf(2.) + (PI * AtomicTransition::strontium().linewidth).powf(2.));
+            / (detuning.powf(2.) + (AtomicTransition::strontium().gamma() / 2.).powf(2.));
 
         assert_approx_eq!(
             sampler_storage
