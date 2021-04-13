@@ -148,7 +148,7 @@ fn main() {
     let mut switcher_system =
         dipole::transition_switcher::AttachAtomicDipoleTransitionToAtomsSystem;
     // Run the simulation for a number of steps.
-    for _i in 0..40_000 {
+    for _i in 0..400_000 {
         dispatcher.dispatch(&mut world.res);
         switcher_system.run_now(&world.res);
         world.maintain();
