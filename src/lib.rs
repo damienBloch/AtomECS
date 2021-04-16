@@ -18,3 +18,4 @@ pub mod maths;
 pub mod output;
 pub mod shapes;
 pub mod sim_region;
+pub mod interpolate;
