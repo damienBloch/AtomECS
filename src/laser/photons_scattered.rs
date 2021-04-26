@@ -74,7 +74,7 @@ impl<'a> System<'a> for CalculateMeanTotalPhotonsScatteredSystem {
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct ExpectedPhotonsScattered {
     ///photons scattered by the atom from a specific beam
-    scattered: f64,
+    pub scattered: f64,
 }
 
 impl Default for ExpectedPhotonsScattered {
