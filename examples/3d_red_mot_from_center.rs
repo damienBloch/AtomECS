@@ -59,7 +59,7 @@ fn main() {
         .create_entity()
         .with(QuadrupoleField3D::gauss_per_cm(1.0, Vector3::z()))
         .with(Position {
-            pos: Vector3::new(0.0, 0.0, 100.0e-6),
+            pos: Vector3::new(0.0, 0.0, 0.0),
         })
         .build();
 
