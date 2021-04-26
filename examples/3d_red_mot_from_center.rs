@@ -18,6 +18,13 @@ use lib::output::file::Text;
 use lib::shapes::Cuboid;
 use lib::sim_region::{SimulationVolume, VolumeType};
 use nalgebra::Vector3;
+use specs::Component;
+use specs::Join;
+use specs::ReadStorage;
+use specs::RunNow;
+use specs::System;
+use specs::VecStorage;
+use specs::WriteStorage;
 use specs::{Builder, World};
 use std::time::Instant;
 
@@ -96,7 +103,7 @@ fn main() {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: radius,
             power: power / 6.,
-            direction: Vector3::new(1.0, 1.0, 0.0).normalize(),
+            direction: Vector3::x(),
         })
         .with(CoolingLight::for_species(
             AtomicTransition::strontium_red(),
@@ -110,7 +117,7 @@ fn main() {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: radius,
             power: power / 6.,
-            direction: Vector3::new(1.0, -1.0, 0.0).normalize(),
+            direction: -Vector3::x(),
         })
         .with(CoolingLight::for_species(
             AtomicTransition::strontium_red(),
@@ -124,7 +131,7 @@ fn main() {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: radius,
             power: power / 6.,
-            direction: Vector3::new(-1.0, 1.0, 0.0).normalize(),
+            direction: Vector3::y(),
         })
         .with(CoolingLight::for_species(
             AtomicTransition::strontium_red(),
@@ -138,7 +145,7 @@ fn main() {
             intersection: Vector3::new(0.0, 0.0, 0.0),
             e_radius: radius,
             power: power / 6.,
-            direction: Vector3::new(-1.0, -1.0, 0.0).normalize(),
+            direction: -Vector3::y(),
         })
         .with(CoolingLight::for_species(
             AtomicTransition::strontium_red(),
@@ -206,11 +213,56 @@ fn main() {
     // Also use a velocity cap so that fast atoms are not even simulated.
     world.add_resource(VelocityCap { value: 200.0 });
 
+    pub struct ComponentSummer {
+        pub sum: Vector3<f64>,
+    }
+
+    impl Component for ComponentSummer {
+        type Storage = VecStorage<Self>;
+    }
+
+    world.register::<ComponentSummer>();
+    let summer = world
+        .create_entity()
+        .with(ComponentSummer {
+            sum: Vector3::new(0.0, 0.0, 0.0),
+        })
+        .build();
+
+    pub struct CheckComponentSystem;
+
+    impl<'a> System<'a> for CheckComponentSystem {
+        type SystemData = (
+            ReadStorage<'a, lib::atom::Force>,
+            WriteStorage<'a, ComponentSummer>,
+        );
+        fn run(&mut self, (rate_coefficients, mut summer): Self::SystemData) {
+            for sum in (&mut summer).join() {
+                for rate in (&rate_coefficients).join() {
+                    sum.sum = sum.sum
+                        + Vector3::new(
+                            rate.force[0].abs(),
+                            rate.force[1].abs(),
+                            rate.force[2].abs(),
+                        );
+                }
+                //println!("temp1 {}", sum.sum);
+            }
+        }
+    }
+
+    let mut system = CheckComponentSystem;
     // Run the simulation for a number of steps.
     for _i in 0..100_000 {
         dispatcher.dispatch(&mut world.res);
+        system.run_now(&world.res);
         world.maintain();
     }
+    let sampler_storage = world.read_storage::<ComponentSummer>();
+    println!(
+        "{}",
+        sampler_storage.get(summer).expect("entity not found").sum
+    );
 
     println!("Simulation completed in {} ms.", now.elapsed().as_millis());
 }
