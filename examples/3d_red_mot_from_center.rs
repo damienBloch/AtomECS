@@ -1,13 +1,10 @@
 extern crate atomecs as lib;
 extern crate nalgebra;
-use atomecs::atom_sources::central_creator::CentralCreator;
 use atomecs::laser::force::EmissionForceOption;
 use atomecs::laser::photons_scattered::ScatteringFluctuationsOption;
+use lib::atom;
 use lib::atom::{AtomicTransition, Position, Velocity};
-use lib::atom_sources::emit::AtomNumberToEmit;
-use lib::atom_sources::mass::{MassDistribution, MassRatio};
 use lib::atom_sources::VelocityCap;
-use lib::destructor::ToBeDestroyed;
 use lib::ecs;
 use lib::integrator::Timestep;
 use lib::laser::cooling::CoolingLight;
@@ -64,7 +61,7 @@ fn main() {
         .build();
 
     let detuning = -0.12; //MHz
-    let power = 0.01; //W total power of all Lasers together
+    let power = 0.1; //W total power of all Lasers together
     let radius = 1.0e-2 / (2.0 * 2.0_f64.sqrt()); // 10mm 1/e^2 diameter
 
     // Horizontal beams along z
@@ -157,27 +154,18 @@ fn main() {
     world.add_resource(EmissionForceOption::default());
     world.add_resource(ScatteringFluctuationsOption::default());
 
-    // Create an oven.
-    // The oven will eject atoms on the first frame and then be deleted.
-    let number_to_emit = 1_000;
-    let size_of_cube = 1.0e-5;
-    let speed = 0.1; // m/s
-
     world
         .create_entity()
-        .with(CentralCreator::new_uniform_cubic(size_of_cube, speed))
-        .with(Position {
-            pos: Vector3::new(0.0, 0.0, 0.0),
+        .with(atom::Force::new())
+        .with(atom::Position {
+            pos: Vector3::new(0.0e-4, 0.0e-4, 0.0e-4),
         })
-        .with(MassDistribution::new(vec![MassRatio {
-            mass: 87.0,
-            ratio: 1.0,
-        }]))
-        .with(AtomicTransition::strontium_red())
-        .with(AtomNumberToEmit {
-            number: number_to_emit,
+        .with(atom::Velocity {
+            vel: Vector3::new(0.0, 0.0, 0.0),
         })
-        .with(ToBeDestroyed)
+        .with(lib::atom::AtomicTransition::strontium_red())
+        .with(atom::Atom)
+        .with(lib::initiate::NewlyCreated)
         .build();
 
     // Define timestep
@@ -234,7 +222,7 @@ fn main() {
 
     impl<'a> System<'a> for CheckComponentSystem {
         type SystemData = (
-            ReadStorage<'a, lib::laser::rate::RateCoefficients>,
+            ReadStorage<'a, lib::laser::photons_scattered::ActualPhotonsScatteredVector>,
             WriteStorage<'a, ComponentSummer>,
         );
         fn run(&mut self, (rate_coefficients, mut summer): Self::SystemData) {
@@ -242,12 +230,12 @@ fn main() {
                 for rate in (&rate_coefficients).join() {
                     sum.sum = sum.sum
                         + Vector6::new(
-                            rate.contents[0].rate,
-                            rate.contents[1].rate,
-                            rate.contents[2].rate,
-                            rate.contents[3].rate,
-                            rate.contents[4].rate,
-                            rate.contents[5].rate,
+                            rate.contents[0].scattered,
+                            rate.contents[1].scattered,
+                            rate.contents[2].scattered,
+                            rate.contents[3].scattered,
+                            rate.contents[4].scattered,
+                            rate.contents[5].scattered,
                         );
                 }
                 //println!("temp1 {}", sum.sum);
@@ -257,7 +245,7 @@ fn main() {
 
     let mut system = CheckComponentSystem;
     // Run the simulation for a number of steps.
-    for _i in 0..100_000 {
+    for _i in 0..1000_000 {
         dispatcher.dispatch(&mut world.res);
         system.run_now(&world.res);
         world.maintain();
