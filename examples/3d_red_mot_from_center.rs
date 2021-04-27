@@ -15,7 +15,6 @@ use lib::output::file::Text;
 use lib::shapes::Cuboid;
 use lib::sim_region::{SimulationVolume, VolumeType};
 use nalgebra::Vector3;
-use nalgebra::Vector6;
 use specs::Component;
 use specs::Join;
 use specs::ReadStorage;
@@ -203,7 +202,7 @@ fn main() {
     world.add_resource(VelocityCap { value: 200.0 });
 
     pub struct ComponentSummer {
-        pub sum: Vector6<f64>,
+        pub sum: Vector3<f64>,
     }
 
     impl Component for ComponentSummer {
@@ -214,7 +213,7 @@ fn main() {
     let summer = world
         .create_entity()
         .with(ComponentSummer {
-            sum: Vector6::new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+            sum: Vector3::new(0.0, 0.0, 0.0),
         })
         .build();
 
@@ -222,20 +221,17 @@ fn main() {
 
     impl<'a> System<'a> for CheckComponentSystem {
         type SystemData = (
-            ReadStorage<'a, lib::laser::photons_scattered::ActualPhotonsScatteredVector>,
+            ReadStorage<'a, lib::atom::Force>,
             WriteStorage<'a, ComponentSummer>,
         );
         fn run(&mut self, (rate_coefficients, mut summer): Self::SystemData) {
             for sum in (&mut summer).join() {
                 for rate in (&rate_coefficients).join() {
                     sum.sum = sum.sum
-                        + Vector6::new(
-                            rate.contents[0].scattered,
-                            rate.contents[1].scattered,
-                            rate.contents[2].scattered,
-                            rate.contents[3].scattered,
-                            rate.contents[4].scattered,
-                            rate.contents[5].scattered,
+                        + Vector3::new(
+                            rate.force[0].abs(),
+                            rate.force[1].abs(),
+                            rate.force[2].abs(),
                         );
                 }
                 //println!("temp1 {}", sum.sum);
