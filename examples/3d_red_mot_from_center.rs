@@ -4,7 +4,6 @@ use atomecs::laser::force::EmissionForceOption;
 use atomecs::laser::photons_scattered::ScatteringFluctuationsOption;
 use lib::atom;
 use lib::atom::{AtomicTransition, Position, Velocity};
-use lib::atom_sources::VelocityCap;
 use lib::ecs;
 use lib::integrator::Timestep;
 use lib::laser::cooling::CoolingLight;
@@ -12,8 +11,6 @@ use lib::laser::gaussian::GaussianBeam;
 use lib::magnetic::quadrupole::QuadrupoleField3D;
 use lib::output::file;
 use lib::output::file::Text;
-use lib::shapes::Cuboid;
-use lib::sim_region::{SimulationVolume, VolumeType};
 use nalgebra::Vector3;
 use specs::Component;
 use specs::Join;
@@ -170,37 +167,6 @@ fn main() {
     // Define timestep
     world.add_resource(Timestep { delta: 1.0e-6 });
 
-    // Use a simulation bound so that atoms that escape the capture region are deleted from the simulation.
-    world
-        .create_entity()
-        .with(Position {
-            pos: Vector3::new(0.0, 0.0, 0.0),
-        })
-        .with(Cuboid {
-            half_width: Vector3::new(0.1, 0.01, 0.01),
-        })
-        .with(SimulationVolume {
-            volume_type: VolumeType::Inclusive,
-        })
-        .build();
-
-    // The simulation bound also now includes a small pipe to capture the 2D MOT output properly.
-    world
-        .create_entity()
-        .with(Position {
-            pos: Vector3::new(0.0, 0.0, 0.1),
-        })
-        .with(Cuboid {
-            half_width: Vector3::new(0.01, 0.01, 0.1),
-        })
-        .with(SimulationVolume {
-            volume_type: VolumeType::Inclusive,
-        })
-        .build();
-
-    // Also use a velocity cap so that fast atoms are not even simulated.
-    world.add_resource(VelocityCap { value: 200.0 });
-
     pub struct ComponentSummer {
         pub sum: Vector3<f64>,
     }
@@ -241,7 +207,7 @@ fn main() {
 
     let mut system = CheckComponentSystem;
     // Run the simulation for a number of steps.
-    for _i in 0..1000_000 {
+    for _i in 0..100_000 {
         dispatcher.dispatch(&mut world.res);
         system.run_now(&world.res);
         world.maintain();

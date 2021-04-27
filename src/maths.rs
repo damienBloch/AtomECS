@@ -49,6 +49,7 @@ pub fn random_direction() -> Vector3<f64> {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use assert_approx_eq::assert_approx_eq;
 
 	#[test]
 	fn test_minimum_distance_line_point() {
@@ -57,5 +58,16 @@ mod tests {
 		let dir = Vector3::new(1., 2., 2.);
 		let distance = get_minimum_distance_line_point(&pos, &centre, &dir);
 		assert!(distance > 0.942, distance < 0.943);
+	}
+
+	#[test]
+	fn test_random_direction() {
+		let mut temp = Vector3::new(0.0, 0.0, 0.0);
+		for _i in 0..1000000 {
+			let rand = random_direction();
+			temp = temp + Vector3::new(rand[0].abs(), rand[1].abs(), rand[2].abs());
+		}
+		println!("{}", temp);
+		assert_approx_eq!(temp[0], Vector3::new(0.0, 0.0, 0.0)[0], 20.);
 	}
 }
