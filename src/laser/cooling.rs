@@ -8,6 +8,52 @@ use specs::{
 };
 
 use crate::constant;
+use nalgebra::{Vector3, Complex};
+use crate::maths::get_ortho_basis;
+
+/// A representation of the light polarization as a 3D complex vector.
+///
+/// With this representation, the polarization is defined by a constant vector.
+/// The complex coefficients hold the magnitude and dephasing of the polarization
+/// in all three directions.
+/// The vector must be normalized and orthogonal to the light wavevector.
+#[derive(Deserialize, Serialize, Clone, Copy)]
+pub struct PolarizedLight {
+    pub vector: Vector3<Complex<f64>>,
+}
+
+impl PolarizedLight {
+    /// Returns one of the right hand polarizations with respect to a given direction.
+    pub fn circular_right(direction: Vector3<f64>) -> Self {
+        let perp_pair = get_ortho_basis(direction);
+        let perp_x = perp_pair.0;
+        let perp_y = perp_pair.1;
+        let polarization = Vector3::new(Complex::new(perp_x.x, -perp_y.x),
+                                        Complex::new(perp_x.y, -perp_y.y),
+                                        Complex::new(perp_x.z, -perp_y.z)) / Complex::new(2.0f64.sqrt(), 0.0);
+        PolarizedLight { vector: polarization }
+    }
+
+    /// Returns one of left hand polarizations with respect to a given direction.
+    pub fn circular_left(direction: Vector3<f64>) -> Self {
+        let perp_pair = get_ortho_basis(direction);
+        let perp_x = perp_pair.0;
+        let perp_y = perp_pair.1;
+        let polarization = Vector3::new(Complex::new(perp_x.x, perp_y.x),
+                                        Complex::new(perp_x.y, perp_y.y),
+                                        Complex::new(perp_x.z, perp_y.z)) / Complex::new(2.0f64.sqrt(), 0.0);
+        PolarizedLight { vector: polarization }
+    }
+
+    /// Returns light linearly polarized and aligned with a given direction.
+    pub fn linear(direction: Vector3<f64>) -> Self {
+        PolarizedLight {
+            vector: Vector3::new(Complex::new(direction.x, 0.0),
+                                 Complex::new(direction.y, 0.0),
+                                 Complex::new(direction.z, 0.0)).normalize()
+        }
+    }
+}
 
 /// A component representing light properties used for laser cooling.
 ///
@@ -16,16 +62,8 @@ use crate::constant;
 /// split into different components in a future version.
 #[derive(Deserialize, Serialize, Clone, Copy)]
 pub struct CoolingLight {
-	/// Polarisation of the laser light, 1 for +, -1 for -,
-	///
-	/// Note that the polarization is defined by the quantization vector (e.g. magnetic field)
-	/// and not (always) in direction of the wavevector. Look at the given examples of 3D-MOT
-	/// simulations to see a working example if unsure.
-	///
-	/// Currently this is an integer value since every partial polarization can be expressed
-	/// as a superposition of fully polarized beams. It  is possible that this will be
-	/// changed to a non-integer value in the future.
-	pub polarization: i32,
+    /// Polarisation of the laser light
+    pub polarization: PolarizedLight,
 
 	/// wavelength of the laser light, in SI units of m.
 	pub wavelength: f64,
@@ -41,22 +79,22 @@ impl CoolingLight {
 		2.0 * constant::PI / self.wavelength
 	}
 
-	/// Creates a `CoolingLight` component from the desired atomic species.
-	///
-	/// # Arguments
-	///
-	/// `species`: The atomic species to take the base wavelength from.
-	///
-	/// `detuning`: Detuning of the laser from transition in units of MHz
-	///
-	/// `polarization`: Polarization of the cooling beam.
-	pub fn for_species(species: AtomicTransition, detuning: f64, polarization: i32) -> Self {
-		let freq = species.frequency + detuning * 1.0e6;
-		CoolingLight {
-			wavelength: constant::C / freq,
-			polarization: polarization,
-		}
-	}
+    /// Creates a `CoolingLight` component from the desired atomic species.
+    ///
+    /// # Arguments
+    ///
+    /// `species`: The atomic species to take the base wavelength from.
+    ///
+    /// `detuning`: Detuning of the laser from transition in units of MHz
+    ///
+    /// `polarization`: Polarization of the cooling beam.
+    pub fn for_species(species: AtomicTransition, detuning: f64, polarization: PolarizedLight) -> Self {
+        let freq = species.frequency + detuning * 1.0e6;
+        CoolingLight {
+            wavelength: constant::C / freq,
+            polarization: polarization,
+        }
+    }
 }
 impl Component for CoolingLight {
 	type Storage = HashMapStorage<Self>;
@@ -144,22 +182,22 @@ pub mod tests {
 		test_world.register::<CoolingLightIndex>();
 		test_world.register::<CoolingLight>();
 
-		let test_entity_1 = test_world
-			.create_entity()
-			.with(CoolingLightIndex::default())
-			.with(CoolingLight {
-				polarization: 1,
-				wavelength: 780e-9,
-			})
-			.build();
-		let test_entity_2 = test_world
-			.create_entity()
-			.with(CoolingLightIndex::default())
-			.with(CoolingLight {
-				polarization: 1,
-				wavelength: 780e-9,
-			})
-			.build();
+        let test_entity_1 = test_world
+            .create_entity()
+            .with(CoolingLightIndex::default())
+            .with(CoolingLight {
+                polarization: PolarizedLight::circular_right(Vector3::z()),
+                wavelength: 780e-9,
+            })
+            .build();
+        let test_entity_2 = test_world
+            .create_entity()
+            .with(CoolingLightIndex::default())
+            .with(CoolingLight {
+                polarization: PolarizedLight::circular_right(Vector3::z()),
+                wavelength: 780e-9,
+            })
+            .build();
 
 		let mut system = IndexCoolingLightsSystem;
 		system.run_now(&test_world.res);
@@ -182,13 +220,13 @@ pub mod tests {
 		test_world.register::<CoolingLightIndex>();
 		test_world.register::<CoolingLight>();
 
-		let test_entity = test_world
-			.create_entity()
-			.with(CoolingLight {
-				polarization: 1,
-				wavelength: 780e-9,
-			})
-			.build();
+        let test_entity = test_world
+            .create_entity()
+            .with(CoolingLight {
+                polarization: PolarizedLight::circular_right(Vector3::z()),
+                wavelength: 780e-9,
+            })
+            .build();
 
 		let mut system = AttachIndexToCoolingLightSystem;
 		system.run_now(&test_world.res);

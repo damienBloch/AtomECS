@@ -10,6 +10,9 @@ use crate::laser::intensity::LaserIntensitySamplers;
 use crate::laser::sampler::LaserDetuningSamplers;
 use crate::magnetic::MagneticFieldSampler;
 use specs::{Component, Join, ReadStorage, System, VecStorage, WriteStorage};
+use crate::laser::cooling::PolarizedLight;
+use nalgebra::{Vector3, Complex};
+use crate::maths::cdot;
 
 /// Represents the rate coefficient of the atom with respect to a specific CoolingLight entity
 #[derive(Clone, Copy)]
@@ -103,30 +106,34 @@ impl<'a> System<'a> for CalculateRateCoefficientsSystem {
                 .par_join()
                 .for_each(|(detunings, intensities, atominfo, bfield, rates)| {
                     let beam_direction_vector = gaussian.direction.normalize();
-                    let costheta = if &bfield.field.norm_squared() < &(10.0 * f64::EPSILON) {
-                        0.0
-                    } else {
+                    let quantization_axis: Vector3<f64> = if &bfield.field.norm_squared() < &(10.0 * f64::EPSILON) {
                         beam_direction_vector
-                            .normalize()
-                            .dot(&bfield.field.normalize())
+                    } else {
+                        bfield.field.normalize()
                     };
 
                     let prefactor =
                         atominfo.rate_prefactor * intensities.contents[index.index].intensity;
                     let gamma = atominfo.gamma();
+                    let sigma_plus = PolarizedLight::circular_right(quantization_axis.clone() as Vector3<f64>).vector;
+                    let sigma_minus = PolarizedLight::circular_left(quantization_axis.clone() as Vector3<f64>).vector;
+                    let sigma_pi = Vector3::new(Complex::new(quantization_axis.x, 0.0),
+                                                Complex::new(quantization_axis.y, 0.0),
+                                                Complex::new(quantization_axis.z, 0.0));
 
                     let scatter1 =
-                        0.25 * (cooling.polarization as f64 * costheta + 1.).powf(2.) * prefactor
+                        cdot(&sigma_plus, &cooling.polarization.vector).norm_sqr() * prefactor
                             / (detunings.contents[index.index].detuning_sigma_plus.powi(2)
-                                + (gamma / 2.0).powi(2));
+                            + (gamma / 2.0).powi(2));
 
                     let scatter2 =
-                        0.25 * (cooling.polarization as f64 * costheta - 1.).powi(2) * prefactor
+                        cdot(&sigma_minus, &cooling.polarization.vector).norm_sqr() * prefactor
                             / (detunings.contents[index.index].detuning_sigma_minus.powi(2)
-                                + (gamma / 2.0).powi(2));
+                            + (gamma / 2.0).powi(2));
 
-                    let scatter3 = 0.5 * (1. - costheta.powf(2.)) * prefactor
-                        / (detunings.contents[index.index].detuning_pi.powi(2)
+                    let scatter3 =
+                        cdot(&sigma_pi, &cooling.polarization.vector).norm_sqr() * prefactor
+                            / (detunings.contents[index.index].detuning_pi.powi(2)
                             + (gamma / 2.0).powi(2));
                     rates.contents[index.index].rate = scatter1 + scatter2 + scatter3;
                 });
@@ -140,7 +147,8 @@ pub mod tests {
     use super::*;
 
     extern crate specs;
-    use crate::laser::cooling::{CoolingLight, CoolingLightIndex};
+
+    use crate::laser::cooling::{CoolingLight, CoolingLightIndex, PolarizedLight};
     use assert_approx_eq::assert_approx_eq;
     use specs::{Builder, RunNow, World};
     extern crate nalgebra;
@@ -168,7 +176,7 @@ pub mod tests {
         test_world
             .create_entity()
             .with(CoolingLight {
-                polarization: 1,
+                polarization: PolarizedLight::circular_right(Vector3::x()),
                 wavelength: wavelength,
             })
             .with(CoolingLightIndex {
@@ -176,7 +184,7 @@ pub mod tests {
                 initiated: true,
             })
             .with(GaussianBeam {
-                direction: Vector3::new(1.0, 0.0, 0.0),
+                direction: Vector3::x(),
                 intersection: Vector3::new(0.0, 0.0, 0.0),
                 e_radius: 2.0,
                 power: 1.0,
