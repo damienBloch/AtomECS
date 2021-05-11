@@ -9,7 +9,6 @@ use crate::magnetic::zeeman::ZeemanShiftSampler;
 use specs::{Component, Join, ReadStorage, System, VecStorage, WriteStorage};
 use std::f64;
 extern crate nalgebra;
-use nalgebra::Vector3;
 
 const LASER_CACHE_SIZE: usize = 16;
 
@@ -195,6 +194,7 @@ pub mod tests {
     use crate::laser::cooling::PolarizedLight;
 
     extern crate nalgebra;
+    use nalgebra::Vector3;
 
     #[test]
     fn test_calculate_laser_detuning_system() {
