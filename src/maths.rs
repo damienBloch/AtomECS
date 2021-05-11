@@ -46,6 +46,17 @@ pub fn random_direction() -> Vector3<f64> {
 	//println!("{:?}",result);
 	result
 }
+
+
+/// Returns two vectors forming an orthogonal direct basis with the argument
+pub fn get_ortho_basis(direction: Vector3<f64>) -> (Vector3<f64>, Vector3<f64>)
+{
+	let dir = Vector3::new(0.23, 1.2, 0.4563).normalize();
+	let perp_x: Vector3<f64> = direction.normalize().cross(&dir).normalize();
+	let perp_y: Vector3<f64> = direction.normalize().cross(&perp_x);
+	(perp_x, perp_y)
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
