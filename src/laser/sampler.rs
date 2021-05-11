@@ -9,6 +9,7 @@ use crate::magnetic::zeeman::ZeemanShiftSampler;
 use specs::{Component, Join, ReadStorage, System, VecStorage, WriteStorage};
 use std::f64;
 extern crate nalgebra;
+use nalgebra::Vector3;
 
 const LASER_CACHE_SIZE: usize = 16;
 
@@ -191,6 +192,8 @@ pub mod tests {
     extern crate specs;
     use assert_approx_eq::assert_approx_eq;
     use specs::{Builder, RunNow, World};
+    use crate::laser::cooling::PolarizedLight;
+
     extern crate nalgebra;
 
     #[test]
@@ -207,7 +210,7 @@ pub mod tests {
         test_world
             .create_entity()
             .with(CoolingLight {
-                polarization: 1,
+                polarization: PolarizedLight::circular_right(Vector3::x()),
                 wavelength: wavelength,
             })
             .with(CoolingLightIndex {

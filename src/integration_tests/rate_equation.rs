@@ -8,7 +8,7 @@ pub mod tests {
     use crate::ecs;
     use crate::initiate::NewlyCreated;
     use crate::integrator::Timestep;
-    use crate::laser::cooling::{CoolingLight, CoolingLightIndex};
+    use crate::laser::cooling::{CoolingLight, CoolingLightIndex, PolarizedLight};
     use crate::laser::gaussian::GaussianBeam;
     use crate::laser::photons_scattered::TotalPhotonsScattered;
     extern crate nalgebra;
@@ -57,7 +57,7 @@ pub mod tests {
             .with(CoolingLight::for_species(
                 transition.clone(),
                 detuning_megahz,
-                1,
+                PolarizedLight::circular_right(-Vector3::x()),
             ))
             .with(CoolingLightIndex::default())
             .with(GaussianBeam::from_peak_intensity(

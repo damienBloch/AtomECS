@@ -108,7 +108,7 @@ pub mod tests {
 
     extern crate specs;
     use crate::constant::PI;
-    use crate::laser::cooling::{CoolingLight, CoolingLightIndex};
+    use crate::laser::cooling::{CoolingLight, CoolingLightIndex, PolarizedLight};
     use assert_approx_eq::assert_approx_eq;
     use specs::{Builder, RunNow, World};
     extern crate nalgebra;
@@ -127,7 +127,7 @@ pub mod tests {
         test_world
             .create_entity()
             .with(CoolingLight {
-                polarization: 1,
+                polarization: PolarizedLight::circular_right(Vector3::x()),
                 wavelength: wavelength,
             })
             .with(CoolingLightIndex {
