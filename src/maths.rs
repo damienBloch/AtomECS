@@ -6,6 +6,7 @@ extern crate rand;
 use rand::Rng;
 extern crate nalgebra;
 use nalgebra::Vector3;
+use self::nalgebra::Complex;
 
 /// Get miniminum distance between a point and a line.
 ///
@@ -55,6 +56,12 @@ pub fn get_ortho_basis(direction: Vector3<f64>) -> (Vector3<f64>, Vector3<f64>)
 	let perp_x: Vector3<f64> = direction.normalize().cross(&dir).normalize();
 	let perp_y: Vector3<f64> = direction.normalize().cross(&perp_x);
 	(perp_x, perp_y)
+}
+
+/// dot product between two complex vectors
+pub fn cdot(v1: &Vector3<Complex<f64>>, v2: &Vector3<Complex<f64>>) -> Complex<f64>
+{
+	v1.x.conj() * v2.x + v1.y.conj() * v2.y + v1.z.conj() * v2.z
 }
 
 #[cfg(test)]
