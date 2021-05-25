@@ -10,6 +10,7 @@ pub mod rate;
 pub mod repump;
 pub mod sampler;
 pub mod twolevel;
+pub mod polarization;
 
 use crate::initiate::NewlyCreated;
 use crate::integrator::INTEGRATE_POSITION_SYSTEM_NAME;
