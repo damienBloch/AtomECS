@@ -7,6 +7,7 @@ use crate::laser::intensity::LaserIntensitySamplers;
 use crate::laser::sampler::LaserDetuningSamplers;
 use crate::magnetic::MagneticFieldSampler;
 use specs::prelude::*;
+use crate::laser::polarization::Polarization;
 
 /// Represents the rate coefficient of the atom with respect to a specific CoolingLight entity
 #[derive(Clone, Copy)]
@@ -52,7 +53,7 @@ impl<'a> System<'a> for InitialiseRateCoefficientsSystem {
 }
 
 /// Calculates the TwoLevel approach rate coefficients for all atoms for all
-/// CoolingLight entities
+/// CoolingLight entities with a Polarization component.
 ///
 /// The Rate can be calculated by: Intensity * Absorption_Cross_Section / Photon_Energy
 ///
@@ -65,6 +66,7 @@ impl<'a> System<'a> for CalculateRateCoefficientsSystem {
     type SystemData = (
         ReadStorage<'a, CoolingLight>,
         ReadStorage<'a, CoolingLightIndex>,
+        ReadStorage<'a, Polarization>,
         ReadStorage<'a, LaserDetuningSamplers>,
         ReadStorage<'a, LaserIntensitySamplers>,
         ReadStorage<'a, AtomicTransition>,
@@ -77,6 +79,7 @@ impl<'a> System<'a> for CalculateRateCoefficientsSystem {
         (
             cooling_light,
             cooling_index,
+            polarizations,
             laser_detunings,
             laser_intensities,
             atomic_transition,
@@ -87,7 +90,7 @@ impl<'a> System<'a> for CalculateRateCoefficientsSystem {
     ) {
         use rayon::prelude::*;
 
-        for (cooling, index, gaussian) in (&cooling_light, &cooling_index, &gaussian_beam).join() {
+        for (cooling, index, polarization, gaussian) in (&cooling_light, &cooling_index, &polarizations, &gaussian_beam).join() {
             (
                 &laser_detunings,
                 &laser_intensities,
