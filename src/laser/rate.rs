@@ -1,13 +1,16 @@
 //! Calculation of RateCoefficients for the rate equation approach
 
-use super::cooling::{CoolingLight, CoolingLightIndex};
+use nalgebra::Vector3;
+use specs::prelude::*;
+
 use crate::atom::AtomicTransition;
 use crate::laser::gaussian::GaussianBeam;
 use crate::laser::intensity::LaserIntensitySamplers;
+use crate::laser::polarization::Polarization;
 use crate::laser::sampler::LaserDetuningSamplers;
 use crate::magnetic::MagneticFieldSampler;
-use specs::prelude::*;
-use crate::laser::polarization::Polarization;
+
+use super::cooling::{CoolingLight, CoolingLightIndex};
 
 /// Represents the rate coefficient of the atom with respect to a specific CoolingLight entity
 #[derive(Clone, Copy)]
@@ -30,6 +33,7 @@ pub struct RateCoefficients {
     /// Vector of `RateCoefficient` where each entry corresponds to a different CoolingLight entity
     pub contents: [RateCoefficient; crate::laser::COOLING_BEAM_LIMIT],
 }
+
 impl Component for RateCoefficients {
     type Storage = VecStorage<Self>;
 }
@@ -38,6 +42,7 @@ impl Component for RateCoefficients {
 ///
 /// It also ensures that the size of the `RateCoefficient` components match the number of CoolingLight entities in the world.
 pub struct InitialiseRateCoefficientsSystem;
+
 impl<'a> System<'a> for InitialiseRateCoefficientsSystem {
     type SystemData = (WriteStorage<'a, RateCoefficients>,);
     fn run(&mut self, (mut rate_coefficients,): Self::SystemData) {
@@ -59,7 +64,7 @@ impl<'a> System<'a> for InitialiseRateCoefficientsSystem {
 ///
 /// This is also the System that currently takes care of handling the polarizations correctly.
 /// The polarization is projected onto the quantization axis given by the local magnetic
-/// field vector. For fully polarized CoolingLight all projection pre-factors add up to 1.
+/// field vector.
 pub struct CalculateRateCoefficientsSystem;
 
 impl<'a> System<'a> for CalculateRateCoefficientsSystem {
@@ -90,7 +95,14 @@ impl<'a> System<'a> for CalculateRateCoefficientsSystem {
     ) {
         use rayon::prelude::*;
 
-        for (cooling, index, polarization, gaussian) in (&cooling_light, &cooling_index, &polarizations, &gaussian_beam).join() {
+        for (cooling, index, polarization, gaussian) in (
+            &cooling_light,
+            &cooling_index,
+            &polarizations,
+            &gaussian_beam,
+        )
+            .join()
+        {
             (
                 &laser_detunings,
                 &laser_intensities,
@@ -101,31 +113,34 @@ impl<'a> System<'a> for CalculateRateCoefficientsSystem {
                 .par_join()
                 .for_each(|(detunings, intensities, atominfo, bfield, rates)| {
                     let beam_direction_vector = gaussian.direction.normalize();
-                    let costheta = if &bfield.field.norm_squared() < &(10.0 * f64::EPSILON) {
-                        0.0
-                    } else {
-                        beam_direction_vector
-                            .normalize()
-                            .dot(&bfield.field.normalize())
-                    };
-
                     let prefactor =
                         atominfo.rate_prefactor * intensities.contents[index.index].intensity;
                     let gamma = atominfo.gamma();
+                    let quantization_axis: Vector3<f64> =
+                        if &bfield.field.norm_squared() < &(10.0 * f64::EPSILON) {
+                            beam_direction_vector
+                        } else {
+                            bfield.field.normalize()
+                        };
 
-                    let scatter1 =
-                        0.25 * (cooling.polarization as f64 * costheta + 1.).powf(2.) * prefactor
-                            / (detunings.contents[index.index].detuning_sigma_plus.powi(2)
-                                + (gamma / 2.0).powi(2));
+                    let sigma_plus =
+                        Polarization::sigma_plus(quantization_axis.clone() as Vector3<f64>).vector;
+                    let sigma_minus =
+                        Polarization::sigma_minus(quantization_axis.clone() as Vector3<f64>).vector;
+                    let sigma_pi = Polarization::linear(quantization_axis).vector;
 
-                    let scatter2 =
-                        0.25 * (cooling.polarization as f64 * costheta - 1.).powi(2) * prefactor
-                            / (detunings.contents[index.index].detuning_sigma_minus.powi(2)
-                                + (gamma / 2.0).powi(2));
+                    let scatter1 = cdot(&sigma_plus, &polarization.vector).norm_sqr() * prefactor
+                        / (detunings.contents[index.index].detuning_sigma_plus.powi(2)
+                            + (gamma / 2.0).powi(2));
 
-                    let scatter3 = 0.5 * (1. - costheta.powf(2.)) * prefactor
+                    let scatter2 = cdot(&sigma_minus, &polarization.vector).norm_sqr() * prefactor
+                        / (detunings.contents[index.index].detuning_sigma_minus.powi(2)
+                            + (gamma / 2.0).powi(2));
+
+                    let scatter3 = cdot(&sigma_pi, &polarization.vector).norm_sqr() * prefactor
                         / (detunings.contents[index.index].detuning_pi.powi(2)
                             + (gamma / 2.0).powi(2));
+
                     rates.contents[index.index].rate = scatter1 + scatter2 + scatter3;
                 });
         }
@@ -134,17 +149,17 @@ impl<'a> System<'a> for CalculateRateCoefficientsSystem {
 
 #[cfg(test)]
 pub mod tests {
-
-    use super::*;
-
-    use crate::laser::cooling::{CoolingLight, CoolingLightIndex};
     use assert_approx_eq::assert_approx_eq;
-    extern crate nalgebra;
     use nalgebra::Vector3;
 
+    use crate::laser::cooling::{CoolingLight, CoolingLightIndex};
     use crate::laser::intensity::LaserIntensitySamplers;
     use crate::laser::sampler::LaserDetuningSamplers;
     use crate::magnetic::MagneticFieldSampler;
+
+    use super::*;
+
+    extern crate nalgebra;
 
     /// Tests the correct implementation of the `RateCoefficients`
     #[test]
