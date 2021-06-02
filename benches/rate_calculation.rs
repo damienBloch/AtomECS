@@ -49,7 +49,6 @@ fn criterion_benchmark(c: &mut Criterion) {
         .with(CoolingLight::for_species(
             AtomicTransition::rubidium(),
             detuning,
-            -1,
         ))
         .build();
     world
@@ -63,7 +62,6 @@ fn criterion_benchmark(c: &mut Criterion) {
         .with(CoolingLight::for_species(
             AtomicTransition::rubidium(),
             detuning,
-            -1,
         ))
         .build();
     world
@@ -77,7 +75,6 @@ fn criterion_benchmark(c: &mut Criterion) {
         .with(CoolingLight::for_species(
             AtomicTransition::rubidium(),
             detuning,
-            1,
         ))
         .build();
     world
@@ -91,7 +88,6 @@ fn criterion_benchmark(c: &mut Criterion) {
         .with(CoolingLight::for_species(
             AtomicTransition::rubidium(),
             detuning,
-            1,
         ))
         .build();
     world
@@ -105,7 +101,6 @@ fn criterion_benchmark(c: &mut Criterion) {
         .with(CoolingLight::for_species(
             AtomicTransition::rubidium(),
             detuning,
-            1,
         ))
         .build();
     world
@@ -119,7 +114,6 @@ fn criterion_benchmark(c: &mut Criterion) {
         .with(CoolingLight::for_species(
             AtomicTransition::rubidium(),
             detuning,
-            1,
         ))
         .build();
 

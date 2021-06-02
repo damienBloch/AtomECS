@@ -106,7 +106,6 @@ fn main() {
         .with(CoolingLight::for_species(
             recoil_limited_transition(),
             detuning,
-            -1,
         ))
         .build();
     world
@@ -120,7 +119,6 @@ fn main() {
         .with(CoolingLight::for_species(
             recoil_limited_transition(),
             detuning,
-            -1,
         ))
         .build();
     world
@@ -134,7 +132,6 @@ fn main() {
         .with(CoolingLight::for_species(
             recoil_limited_transition(),
             detuning,
-            1,
         ))
         .build();
     world
@@ -148,7 +145,6 @@ fn main() {
         .with(CoolingLight::for_species(
             recoil_limited_transition(),
             detuning,
-            1,
         ))
         .build();
     world
@@ -162,7 +158,6 @@ fn main() {
         .with(CoolingLight::for_species(
             recoil_limited_transition(),
             detuning,
-            1,
         ))
         .build();
     world
@@ -176,7 +171,6 @@ fn main() {
         .with(CoolingLight::for_species(
             recoil_limited_transition(),
             detuning,
-            1,
         ))
         .build();
 

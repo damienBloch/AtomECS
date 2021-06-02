@@ -58,7 +58,6 @@ fn main() {
         .with(CoolingLight::for_species(
             AtomicTransition::rubidium(),
             detuning,
-            -1,
         ))
         .build();
     world
@@ -72,7 +71,6 @@ fn main() {
         .with(CoolingLight::for_species(
             AtomicTransition::rubidium(),
             detuning,
-            -1,
         ))
         .build();
 

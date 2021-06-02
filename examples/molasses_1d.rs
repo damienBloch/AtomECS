@@ -64,7 +64,6 @@ fn main() {
         .with(CoolingLight::for_species(
             AtomicTransition::rubidium(),
             -6.0,
-            -1,
         ))
         .build();
     world
@@ -78,7 +77,6 @@ fn main() {
         .with(CoolingLight::for_species(
             AtomicTransition::rubidium(),
             -6.0,
-            -1,
         ))
         .build();
 

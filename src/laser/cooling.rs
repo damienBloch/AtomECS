@@ -184,7 +184,7 @@ pub mod tests {
 	#[test]
 	fn test_for_species() {
 		let detuning = 12.0;
-		let light = CoolingLight::for_species(AtomicTransition::rubidium(), detuning);
+		let light = CoolingLight::for_species(AtomicTransition::rubidium(), detuning, );
 		assert_approx_eq!(
 			light.frequency(),
 			AtomicTransition::rubidium().frequency + 1.0e6 * detuning
