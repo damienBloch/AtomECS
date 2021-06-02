@@ -32,6 +32,15 @@ pub fn gaussian_dis(std: f64, distance: f64) -> f64 {
 	1.0 / (2.0 * PI * std * std) * EXP.powf(-distance * distance / 2.0 / (std * std))
 }
 
+/// Returns two vectors forming an orthogonal direct basis with the argument
+pub fn get_ortho_basis(direction: &Vector3<f64>) -> (Vector3<f64>, Vector3<f64>)
+{
+	let dir = Vector3::new(0.23, 1.2, 0.4563).normalize();
+	let perp_x: Vector3<f64> = direction.normalize().cross(&dir).normalize();
+	let perp_y: Vector3<f64> = direction.normalize().cross(&perp_x);
+	(perp_x, perp_y)
+}
+
 /// Dot product between two complex vectors
 pub fn cdot(v1: &Vector3<Complex<f64>>, v2: &Vector3<Complex<f64>>) -> Complex<f64>
 {

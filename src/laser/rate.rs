@@ -96,7 +96,7 @@ impl<'a> System<'a> for CalculateRateCoefficientsSystem {
     ) {
         use rayon::prelude::*;
 
-        for (cooling, index, polarization, gaussian) in (
+        for (_, index, polarization, gaussian) in (
             &cooling_light,
             &cooling_index,
             &polarizations,
@@ -125,10 +125,10 @@ impl<'a> System<'a> for CalculateRateCoefficientsSystem {
                         };
 
                     let sigma_plus =
-                        Polarization::sigma_plus(quantization_axis.clone() as Vector3<f64>).vector;
+                        Polarization::sigma_plus(&quantization_axis).vector;
                     let sigma_minus =
-                        Polarization::sigma_minus(quantization_axis.clone() as Vector3<f64>).vector;
-                    let sigma_pi = Polarization::linear(quantization_axis).vector;
+                        Polarization::sigma_minus(&quantization_axis).vector;
+                    let sigma_pi = Polarization::linear(&quantization_axis).vector;
 
                     let scatter1 = cdot(&sigma_plus, &polarization.vector).norm_sqr() * prefactor
                         / (detunings.contents[index.index].detuning_sigma_plus.powi(2)

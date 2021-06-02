@@ -1,7 +1,10 @@
 //! Component for the polarization
 
 use nalgebra::{Complex, Vector3};
+use serde::{Deserialize, Serialize};
 use specs::{Component, HashMapStorage};
+
+use crate::maths::get_ortho_basis;
 
 /// A representation of the light polarization as a 3D complex vector.
 ///
@@ -20,7 +23,7 @@ impl Component for Polarization {
 
 impl Polarization {
     /// Returns a possible sigma_plus polarization with respect to a given direction.
-    pub fn sigma_plus(direction: Vector3<f64>) -> Self {
+    pub fn sigma_plus(direction: &Vector3<f64>) -> Self {
         let perp_pair = get_ortho_basis(direction);
         let perp_x = perp_pair.0;
         let perp_y = perp_pair.1;
@@ -35,7 +38,7 @@ impl Polarization {
     }
 
     /// Returns a possible sigma_minus polarization with respect to a given direction.
-    pub fn sigma_minus(direction: Vector3<f64>) -> Self {
+    pub fn sigma_minus(direction: &Vector3<f64>) -> Self {
         let perp_pair = get_ortho_basis(direction);
         let perp_x = perp_pair.0;
         let perp_y = perp_pair.1;
@@ -50,7 +53,7 @@ impl Polarization {
     }
 
     /// Returns linear polarization, aligned with a given direction.
-    pub fn linear(direction: Vector3<f64>) -> Self {
+    pub fn linear(direction: &Vector3<f64>) -> Self {
         Polarization {
             vector: Vector3::new(
                 Complex::new(direction.x, 0.0),
