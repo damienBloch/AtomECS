@@ -190,6 +190,7 @@ pub mod tests {
     use assert_approx_eq::assert_approx_eq;
     extern crate nalgebra;
     use nalgebra::Vector3;
+    use crate::laser::polarization::Polarization;
 
     /// Tests the correct implementation of the `CalculateAbsorptionForceSystem`
     #[test]
@@ -200,6 +201,7 @@ pub mod tests {
 
         test_world.register::<CoolingLightIndex>();
         test_world.register::<CoolingLight>();
+        test_world.register::<Polarization>();
         test_world.register::<GaussianBeam>();
         test_world.register::<ActualPhotonsScatteredVector>();
         test_world.register::<Force>();
@@ -207,18 +209,19 @@ pub mod tests {
         test_world.insert(Timestep { delta: time_delta });
 
         let wavelength = 461e-9;
+        let direction = Vector3::x();
         test_world
             .create_entity()
             .with(CoolingLight {
-                polarization: 1,
                 wavelength: wavelength,
             })
+            .with(Polarization::sigma_plus(&direction))
             .with(CoolingLightIndex {
                 index: 0,
                 initiated: true,
             })
             .with(GaussianBeam {
-                direction: Vector3::new(1.0, 0.0, 0.0),
+                direction: direction,
                 intersection: Vector3::new(0.0, 0.0, 0.0),
                 e_radius: 2.0,
                 power: 1.0,

@@ -4,6 +4,10 @@
 
 #[cfg(test)]
 pub mod tests {
+    use assert_approx_eq::assert_approx_eq;
+    use nalgebra::Vector3;
+    use specs::prelude::*;
+
     use crate::atom::{Atom, AtomicTransition, Force, Mass, Position, Velocity};
     use crate::ecs;
     use crate::initiate::NewlyCreated;
@@ -11,10 +15,9 @@ pub mod tests {
     use crate::laser::cooling::{CoolingLight, CoolingLightIndex};
     use crate::laser::gaussian::GaussianBeam;
     use crate::laser::photons_scattered::TotalPhotonsScattered;
+    use crate::laser::polarization::Polarization;
+
     extern crate nalgebra;
-    use assert_approx_eq::assert_approx_eq;
-    use nalgebra::Vector3;
-    use specs::prelude::*;
 
     #[test]
     fn single_beam_scattering_rates_v_detuning() {
@@ -51,17 +54,18 @@ pub mod tests {
         dispatcher.setup(&mut world);
 
         // add laser to test world.
+        let direction = -Vector3::x();
         world
             .create_entity()
             .with(CoolingLight::for_species(
                 transition.clone(),
                 detuning_megahz,
-                1,
             ))
+            .with(Polarization::sigma_plus(&direction))
             .with(CoolingLightIndex::default())
             .with(GaussianBeam::from_peak_intensity(
                 Vector3::new(0.0, 0.0, 0.0),
-                Vector3::new(-1.0, 0.0, 0.0),
+                direction,
                 intensity,
                 0.01,
             ))
