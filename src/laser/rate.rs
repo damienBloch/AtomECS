@@ -156,6 +156,7 @@ pub mod tests {
     use crate::laser::intensity::LaserIntensitySamplers;
     use crate::laser::sampler::LaserDetuningSamplers;
     use crate::magnetic::MagneticFieldSampler;
+    use crate::laser::polarization::Polarization;
 
     use super::*;
 
@@ -168,6 +169,7 @@ pub mod tests {
 
         test_world.register::<CoolingLightIndex>();
         test_world.register::<CoolingLight>();
+        test_world.register::<Polarization>();
         test_world.register::<GaussianBeam>();
         test_world.register::<LaserDetuningSamplers>();
         test_world.register::<LaserIntensitySamplers>();
@@ -176,18 +178,19 @@ pub mod tests {
         test_world.register::<RateCoefficients>();
 
         let wavelength = 461e-9;
+        let direction = Vector3::new(1.0, 0.0, 0.0);
         test_world
             .create_entity()
             .with(CoolingLight {
-                polarization: 1,
                 wavelength: wavelength,
             })
+            .with(Polarization::sigma_plus(&direction))
             .with(CoolingLightIndex {
                 index: 0,
                 initiated: true,
             })
             .with(GaussianBeam {
-                direction: Vector3::new(1.0, 0.0, 0.0),
+                direction: direction,
                 intersection: Vector3::new(0.0, 0.0, 0.0),
                 e_radius: 2.0,
                 power: 1.0,
