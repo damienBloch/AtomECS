@@ -9,6 +9,7 @@ use crate::laser::intensity::LaserIntensitySamplers;
 use crate::laser::polarization::Polarization;
 use crate::laser::sampler::LaserDetuningSamplers;
 use crate::magnetic::MagneticFieldSampler;
+use crate::maths::cdot;
 
 use super::cooling::{CoolingLight, CoolingLightIndex};
 

@@ -4,6 +4,7 @@ use crate::constant::EXP;
 use crate::constant::PI;
 extern crate nalgebra;
 use nalgebra::Vector3;
+use self::nalgebra::Complex;
 
 /// Get miniminum distance between a point and a line.
 ///
@@ -29,6 +30,12 @@ pub fn get_minimum_distance_line_point(
 /// The distribution is normalised such that the 2D area underneath a gaussian dist with sigma_x=sigma_y=std is equal to 1.
 pub fn gaussian_dis(std: f64, distance: f64) -> f64 {
 	1.0 / (2.0 * PI * std * std) * EXP.powf(-distance * distance / 2.0 / (std * std))
+}
+
+/// Dot product between two complex vectors
+pub fn cdot(v1: &Vector3<Complex<f64>>, v2: &Vector3<Complex<f64>>) -> Complex<f64>
+{
+	v1.x.conj() * v2.x + v1.y.conj() * v2.y + v1.z.conj() * v2.z
 }
 
 #[cfg(test)]
