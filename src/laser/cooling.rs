@@ -1,4 +1,4 @@
-//! Components for the CoolingLight entities and their initilization
+//! Components for the CoolingLight entities and their initialization
 
 use crate::atom::AtomicTransition;
 use crate::constant;
@@ -7,22 +7,10 @@ use specs::prelude::*;
 
 /// A component representing light properties used for laser cooling.
 ///
-/// Currently only holds the information about polarization and wavelength
-/// and works as a marker for all laser cooling processes. This will be
-/// split into different components in a future version.
+/// Currently only holds the information about wavelength
+/// and works as a marker for all laser cooling processes.
 #[derive(Deserialize, Serialize, Clone, Copy)]
 pub struct CoolingLight {
-	/// Polarisation of the laser light, 1 for +, -1 for -,
-	///
-	/// Note that the polarization is defined by the quantization vector (e.g. magnetic field)
-	/// and not (always) in direction of the wavevector. Look at the given examples of 3D-MOT
-	/// simulations to see a working example if unsure.
-	///
-	/// Currently this is an integer value since every partial polarization can be expressed
-	/// as a superposition of fully polarized beams. It  is possible that this will be
-	/// changed to a non-integer value in the future.
-	pub polarization: i32,
-
 	/// wavelength of the laser light, in SI units of m.
 	pub wavelength: f64,
 }
@@ -46,11 +34,10 @@ impl CoolingLight {
 	/// `detuning`: Detuning of the laser from transition in units of MHz
 	///
 	/// `polarization`: Polarization of the cooling beam.
-	pub fn for_species(species: AtomicTransition, detuning: f64, polarization: i32) -> Self {
+	pub fn for_species(species: AtomicTransition, detuning: f64) -> Self {
 		let freq = species.frequency + detuning * 1.0e6;
 		CoolingLight {
 			wavelength: constant::C / freq,
-			polarization: polarization,
 		}
 	}
 }
@@ -142,7 +129,6 @@ pub mod tests {
 			.create_entity()
 			.with(CoolingLightIndex::default())
 			.with(CoolingLight {
-				polarization: 1,
 				wavelength: 780e-9,
 			})
 			.build();
@@ -150,7 +136,6 @@ pub mod tests {
 			.create_entity()
 			.with(CoolingLightIndex::default())
 			.with(CoolingLight {
-				polarization: 1,
 				wavelength: 780e-9,
 			})
 			.build();
@@ -179,7 +164,6 @@ pub mod tests {
 		let test_entity = test_world
 			.create_entity()
 			.with(CoolingLight {
-				polarization: 1,
 				wavelength: 780e-9,
 			})
 			.build();
@@ -200,7 +184,7 @@ pub mod tests {
 	#[test]
 	fn test_for_species() {
 		let detuning = 12.0;
-		let light = CoolingLight::for_species(AtomicTransition::rubidium(), detuning, 1);
+		let light = CoolingLight::for_species(AtomicTransition::rubidium(), detuning);
 		assert_approx_eq!(
 			light.frequency(),
 			AtomicTransition::rubidium().frequency + 1.0e6 * detuning
