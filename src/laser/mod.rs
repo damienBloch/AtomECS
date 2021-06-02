@@ -209,4 +209,5 @@ pub fn register_components(world: &mut World) {
 	world.register::<cooling::CoolingLightIndex>();
 	world.register::<gaussian::GaussianBeam>();
 	world.register::<gaussian::CircularMask>();
+	world.register::<polarization::Polarization>();
 }
